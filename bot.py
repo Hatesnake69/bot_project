@@ -11,22 +11,20 @@ dp = Dispatcher(bot=bot)
 
 @dp.message_handler(commands=['start'])
 async def process_start_command(message: types.Message):
-    data = await cache.get_data(chat=message.chat, user=message.from_user.username)
-    print(data)
+    await cache.set_data(chat=message.chat, user=message.from_user.username, data=message.text)  # запись в кэш
+
     await message.reply("Привет!\nНапиши мне что-нибудь!")
 
 
 @dp.message_handler(commands=['help'])
 async def process_help_command(message: types.Message):
-    await cache.set_data(chat=message.chat, user=message.from_user.username, data=message.text)
-    print(message.text)
+    await cache.set_data(chat=message.chat, user=message.from_user.username, data=message.text)     # запись в кэш
     await message.reply("Пиши, повторю за тобой")
 
 
 @dp.message_handler()
 async def echo_message(message: types.Message):
-    await cache.set_data(chat=message.chat, user=message.from_user.username, data=message.text)
-    print(message.text)
+    await cache.set_data(chat=message.chat, user=message.from_user.username, data=message.text)     # запись в кэш
     await bot.send_message(message.from_user.id, message.text)
 
 

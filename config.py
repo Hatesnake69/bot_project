@@ -6,8 +6,8 @@ from aiogram.contrib.fsm_storage.redis import RedisStorage2
 load_dotenv()
 
 BOT_TOKEN: str = os.getenv("BOT_TOKEN")
-HOST: str = os.getenv('HOST')
-PORT: str = os.getenv('PORT')
+REDIS_HOST: str = os.getenv('REDIS_HOST')  # это для редиса
+PORT: str = os.getenv('PORT')  # это для редиса
 
 
-cache = RedisStorage2()
+cache = RedisStorage2(host=REDIS_HOST, port=int(PORT))
