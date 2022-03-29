@@ -21,7 +21,17 @@ cp .env.example .env
 BOT_TOKEN=...
 ```
 
-После всех выполненных шагов, запускаем наш файл `bot.py`
-```sh
-python bot.py
+После всех выполненных шагов, запускаем 
+```bash
+docker compose up -d --build
+```
+
+Остановить:
+```bash
+docker compose stop
+```
+
+Уничтожить:
+```bash
+docker-compose down -v
 ```
