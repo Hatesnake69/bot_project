@@ -1,11 +1,12 @@
 aiogram==2.19
+aiogram-calendar==0.1.1
 aiohttp==3.8.1
 aiosignal==1.2.0
 APScheduler==3.9.1
 async-timeout==4.0.2
 attrs==21.4.0
 Babel==2.9.1
-backports.zoneinfo==0.2.1
+#backports.zoneinfo==0.2.1
 black==22.1.0
 cachetools==5.0.0
 certifi==2021.10.8
@@ -29,7 +30,7 @@ grpcio==1.44.0
 grpcio-status
 idna==3.3
 idna-ssl==1.1.0
-isdayoff==1.0
+#isdayoff==1.0
 isort==5.10.1
 kiwisolver==1.4.1
 matplotlib==3.5.1

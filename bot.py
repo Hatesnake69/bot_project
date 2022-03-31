@@ -7,7 +7,7 @@ from aiogram.utils import executor
 from app.handlers.create_event import register_handlers_create_event
 from app.handlers.common import register_handlers_common
 from maildelivery import sending_message, gen_secret_key
-from states import BotStates
+# from states import BotStates
 from config import BOT_TOKEN, WEBHOOK_PATH, WEBAPP_HOST, WEBAPP_PORT, webhook_url, cache
 
 bot = Bot(token=BOT_TOKEN)
@@ -82,10 +82,10 @@ register_handlers_create_event(dp)
 
 
 if __name__ == '__main__':
-    # executor.start_polling(dp)
-    executor.start_webhook(dispatcher=dp,
-                           webhook_path=WEBHOOK_PATH,
-                           on_startup=on_startup,
-                           skip_updates=True,
-                           host=WEBAPP_HOST,
-                           port=WEBAPP_PORT)
+    executor.start_polling(dp)
+    # executor.start_webhook(dispatcher=dp,
+    #                        webhook_path=WEBHOOK_PATH,
+    #                        on_startup=on_startup,
+    #                        skip_updates=True,
+    #                        host=WEBAPP_HOST,
+    #                        port=WEBAPP_PORT)
