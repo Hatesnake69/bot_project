@@ -20,6 +20,18 @@ cp .env.example .env
 ```
 BOT_TOKEN=...
 ```
+# Запустить docker контейнер 
+```sh
+docker run -p 6379:6379 -d redis:5
+```
+Для остановки или перезапуска Redis использовать:
+```sh
+/etc/init.d/redis-server stop
+/etc/init.d/redis-server restart
+```
+После всех выполненных шагов, запускаем наш файл `bot.py`
+```sh
+python bot.py
 
 После всех выполненных шагов, запускаем 
 ```bash

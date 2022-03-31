@@ -56,3 +56,5 @@ tzdata==2022.1
 tzlocal==4.1
 urllib3==1.26.9
 yarl==1.7.2
+aioredis==2.0.0
+redis~=4.2.0
