@@ -24,7 +24,7 @@ def sending_message(to_email, secret_key):
     """
     try:
         msg = MIMEMultipart()
-        msg['From'] = from_email
+        msg['From'] = FROM_EMAIL
         msg['To'] = to_email
         msg['Subject'] = 'Регистрация'
         message = f'The secret key is {secret_key}'
@@ -32,7 +32,7 @@ def sending_message(to_email, secret_key):
         server = smtplib.SMTP('smtp.yandex.ru', 587)
         server.set_debuglevel(True)
         server.starttls()
-        server.login(from_email, password)
+        server.login(FROM_EMAIL, PASSWORD)
         server.send_message(msg)
         server.quit()
     except smtplib.SMTPDataError:

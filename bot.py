@@ -6,6 +6,7 @@ from aiogram.utils import executor
 from config import cache
 from maildelivery import sending_message, gen_secret_key
 from states import BotStates
+from services.registration import make_registration
 
 from config import BOT_TOKEN, WEBHOOK_PATH, WEBAPP_HOST, WEBAPP_PORT, webhook_url
 
@@ -58,8 +59,7 @@ async def email_message(message: types.Message):
 async def key_message(message: types.Message):
     secret_key = await cache.get_data(chat=message.chat,
                                       user=message.from_user.username)
-    print(secret_key['secret_key'])
-    if secret_key['secret_key'] == message.text:
+    if secret_key['secret_key'] == message.text and await make_registration(message):
         await message.answer("Вы ввели верный ключ! "
                              "Добро пожаловать в YlabBot")
     else:
