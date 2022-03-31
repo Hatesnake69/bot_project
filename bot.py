@@ -1,12 +1,12 @@
 from aiogram import Bot, types
+from isort import Config
+from states import *
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
 from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
-
 from config import cache
 from maildelivery import sending_message, gen_secret_key
 from states import BotStates
-
 from config import BOT_TOKEN, WEBHOOK_PATH, WEBAPP_HOST, WEBAPP_PORT, webhook_url
 
 bot = Bot(token=BOT_TOKEN)
@@ -85,5 +85,3 @@ if __name__ == '__main__':
                            skip_updates=True,
                            host=WEBAPP_HOST,
                            port=WEBAPP_PORT)
-
-
