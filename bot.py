@@ -1,19 +1,22 @@
 from aiogram import Bot, types
 from isort import Config
-from states import *
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
 from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
 from app.handlers.create_event import register_handlers_create_event
 from app.handlers.common import register_handlers_common
+from app.handlers.faq import register_handlers_faq
 from maildelivery import sending_message, gen_secret_key
+from config import BOT_TOKEN, WEBHOOK_PATH, WEBAPP_HOST, WEBAPP_PORT, webhook_url, cache
 from states import BotStates
 from services.registration import make_registration
 
-from config import BOT_TOKEN, WEBHOOK_PATH, WEBAPP_HOST, WEBAPP_PORT, webhook_url
-
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot=bot, storage=RedisStorage2())
+
+register_handlers_common(dp)
+register_handlers_create_event(dp)
+register_handlers_faq(dp)
 
 
 @dp.message_handler(commands=['start'], state='*')
@@ -80,10 +83,10 @@ async def on_startup(dp: Dispatcher):
 
 
 if __name__ == '__main__':
-    executor.start_polling(dp)
-    # executor.start_webhook(dispatcher=dp,
-    #                        webhook_path=WEBHOOK_PATH,
-    #                        on_startup=on_startup,
-    #                        skip_updates=True,
-    #                        host=WEBAPP_HOST,
-    #                        port=WEBAPP_PORT)
+    # executor.start_polling(dp)
+    executor.start_webhook(dispatcher=dp,
+                           webhook_path=WEBHOOK_PATH,
+                           on_startup=on_startup,
+                           skip_updates=True,
+                           host=WEBAPP_HOST,
+                           port=WEBAPP_PORT)
