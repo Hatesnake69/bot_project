@@ -1,9 +1,11 @@
 from aiogram import Bot, types
+from isort import Config
+from states import *
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
 from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
-
-from config import cache
+from app.handlers.create_event import register_handlers_create_event
+from app.handlers.common import register_handlers_common
 from maildelivery import sending_message, gen_secret_key
 from states import BotStates
 from services.registration import make_registration
@@ -78,12 +80,10 @@ async def on_startup(dp: Dispatcher):
 
 
 if __name__ == '__main__':
-    # executor.start_polling(dp)
-    executor.start_webhook(dispatcher=dp,
-                           webhook_path=WEBHOOK_PATH,
-                           on_startup=on_startup,
-                           skip_updates=True,
-                           host=WEBAPP_HOST,
-                           port=WEBAPP_PORT)
-
-
+    executor.start_polling(dp)
+    # executor.start_webhook(dispatcher=dp,
+    #                        webhook_path=WEBHOOK_PATH,
+    #                        on_startup=on_startup,
+    #                        skip_updates=True,
+    #                        host=WEBAPP_HOST,
+    #                        port=WEBAPP_PORT)
