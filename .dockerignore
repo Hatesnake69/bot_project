@@ -1,0 +1,12 @@
+.env
+.md
+.yml
+.git
+.idea
+README.md
+Dockerfile
+.gitignore
+venv
+.venv
+env
+*.sqlite3
