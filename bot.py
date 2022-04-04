@@ -5,13 +5,14 @@ from aiogram.utils import executor
 from isort import Config
 
 from app.handlers.common import register_handlers_common
-from app.handlers.create_event import register_handlers_create_event, scheduler
+from app.handlers.create_event import register_handlers_create_event
 from app.handlers.faq import register_handlers_faq
 from config import (BOT_TOKEN, WEBAPP_HOST, WEBAPP_PORT, WEBHOOK_PATH, cache,
                     webhook_url)
 from maildelivery import gen_secret_key, sending_message
 from services.registration import make_registration
 from states import BotStates
+from sсheduler import SCHEDULER
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot=bot, storage=RedisStorage2())
@@ -85,12 +86,13 @@ async def on_startup(dp: Dispatcher):
 
 
 if __name__ == '__main__':
-    scheduler.start()
-    # executor.start_polling(dp)
+    SCHEDULER.start()
+    executor.start_polling(dp)
     # print(cache.scan_iter())
-    executor.start_webhook(dispatcher=dp,
-                           webhook_path=WEBHOOK_PATH,
-                           on_startup=on_startup,
-                           skip_updates=True,
-                           host=WEBAPP_HOST,
-                           port=WEBAPP_PORT)
+    # executor.start_webhook(dispatcher=dp,
+    #                        webhook_path=WEBHOOK_PATH,
+    #                        on_startup=on_startup,
+    #                        skip_updates=True,
+    #                        host=WEBAPP_HOST,
+    #                        port=WEBAPP_PORT)
+

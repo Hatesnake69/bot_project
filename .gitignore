@@ -83,12 +83,14 @@ media
 
 ### Django ###
 *.log
-*.pot
+
 *.pyc
-__pycache__/
+
 local_settings.py
 
 .env
 /venv
 db.sqlite3
+
 credentials.json
+

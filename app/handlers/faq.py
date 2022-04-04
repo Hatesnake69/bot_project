@@ -8,7 +8,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 async def update_state(message, new_state, keyboard, state):
     await cache.set_data(chat=message.chat, user=message.from_user.username, data=message.text)
     await state.set_state(new_state)
-    await message.reply('choose', reply_markup=KEYBOARDS[keyboard], reply=False)
+    await message.reply("choose", reply_markup=KEYBOARDS[keyboard], reply=False)
 
 
 class HelpStates(StatesGroup):
@@ -28,140 +28,140 @@ class HelpStates(StatesGroup):
 async def process_start_command(message: types.Message, state: FSMContext):
     await update_state(message,
                        HelpStates.INIT_FIRST_STATE,
-                       'start',
+                       "start",
                        state)
 
 
 async def fin_to_start_command(message: types.Message, state: FSMContext):
     await update_state(message,
                        HelpStates.FIN_FIRST_STATE,
-                       'fin_first',
+                       "fin_first",
                        state)
 
 
 async def fwd_to_second_command(message: types.Message, state: FSMContext):
     await update_state(message,
                        HelpStates.FIN_SECOND_STATE,
-                       'fin_second',
+                       "fin_second",
                        state)
 
 
 async def fin_bck_start_command(message: types.Message, state: FSMContext):
     await update_state(message,
                        HelpStates.INIT_FIRST_STATE,
-                       'start',
+                       "start",
                        state)
 
 
 async def fin_fwd_third_command(message: types.Message, state: FSMContext):
     await update_state(message,
                        HelpStates.FIN_THIRD_STATE,
-                       'fin_third',
+                       "fin_third",
                        state)
 
 
 async def fin_bck_first_command(message: types.Message, state: FSMContext):
     await update_state(message,
                        HelpStates.FIN_FIRST_STATE,
-                       'fin_first',
+                       "fin_first",
                        state)
 
 
 async def fin_up_start_command(message: types.Message, state: FSMContext):
     await update_state(message,
                        HelpStates.INIT_FIRST_STATE,
-                       'start',
+                       "start",
                        state)
 
 
 async def fin_bck_second_command(message: types.Message, state: FSMContext):
     await update_state(message,
                        HelpStates.FIN_SECOND_STATE,
-                       'fin_second',
+                       "fin_second",
                        state)
 
 
 async def fin_third_up_command(message: types.Message, state: FSMContext):
     await update_state(message,
                        HelpStates.INIT_FIRST_STATE,
-                       'start',
+                       "start",
                        state)
 
 
 async def start_to_org_command(message: types.Message, state: FSMContext):
     await update_state(message,
                        HelpStates.ORG_STATE,
-                       'org',
+                       "org",
                        state)
 
 
 async def org_bck_start_command(message: types.Message, state: FSMContext):
     await update_state(message,
                        HelpStates.INIT_FIRST_STATE,
-                       'start',
+                       "start",
                        state)
 
 
 async def start_to_acc_command(message: types.Message, state: FSMContext):
     await update_state(message,
                        HelpStates.ACC_STATE,
-                       'acc',
+                       "acc",
                        state)
 
 
 async def acc_bck_start_command(message: types.Message, state: FSMContext):
     await update_state(message,
                        HelpStates.INIT_FIRST_STATE,
-                       'start',
+                       "start",
                        state)
 
 
 async def tech_fwd_first_command(message: types.Message, state: FSMContext):
     await update_state(message,
                        HelpStates.TECH_FIRST_STATE,
-                       'tech_first',
+                       "tech_first",
                        state)
 
 
 async def tech_fwd_second_command(message: types.Message, state: FSMContext):
     await update_state(message,
                        HelpStates.TECH_SECOND_STATE,
-                       'tech_second',
+                       "tech_second",
                        state)
 
 
 async def tech_bck_start_command(message: types.Message, state: FSMContext):
     await update_state(message,
                        HelpStates.INIT_FIRST_STATE,
-                       'start',
+                       "start",
                        state)
 
 
 async def tech_bck_first_command(message: types.Message, state: FSMContext):
     await update_state(message,
                        HelpStates.TECH_FIRST_STATE,
-                       'tech_first',
+                       "tech_first",
                        state)
 
 
 async def tech_up_start_command(message: types.Message, state: FSMContext):
     await update_state(message,
                        HelpStates.INIT_FIRST_STATE,
-                       'start',
+                       "start",
                        state)
 
 
 async def start_to_oth_command(message: types.Message, state: FSMContext):
     await update_state(message,
                        HelpStates.OTH_STATE,
-                       'oth',
+                       "oth",
                        state)
 
 
 async def oth_bck_start_command(message: types.Message, state: FSMContext):
     await update_state(message,
                        HelpStates.INIT_FIRST_STATE,
-                       'start',
+                       "start",
                        state)
 
 
