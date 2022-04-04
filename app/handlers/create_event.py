@@ -1,15 +1,17 @@
 import re
 
-from aiogram import types, Dispatcher
-from aiogram.types import CallbackQuery, ReplyKeyboardMarkup
+import aiogram.utils.markdown as md
+from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
-import aiogram.utils.markdown as md
-
+from aiogram.types import CallbackQuery, ReplyKeyboardMarkup
 from aiogram_calendar import SimpleCalendar, simple_cal_callback
 
-start_kb = ReplyKeyboardMarkup(resize_keyboard=True)
+from sсheduler import YScheduler
 
+start_kb = ReplyKeyboardMarkup(resize_keyboard=True, )
+
+scheduler = YScheduler()
 
 class Form(StatesGroup):
     """
@@ -107,13 +109,18 @@ async def set_event_comment(message: types.Message, state: FSMContext) -> None:
     """
     async with state.proxy() as data:
         data['event_comment'] = message.text
-    await message.answer(md.text(
-                               md.text(message.chat.id),
-                               md.text(data['event_name']),
-                               md.text(data['event_date']),
-                               md.text(data['event_time']),
-                               md.text(data['event_comment']),
-                               sep='\n'))
+
+    await message.answer(
+        md.text(
+            md.text(message.chat.id),
+            md.text(data['event_name']),
+            md.text(data['event_date']),
+            md.text(data['event_time']),
+            md.text(data['event_comment']),
+            sep='\n',
+        ),
+    )
+
     await Form.next()
     await message.reply("Подтвердить? (да/нет)")
 
@@ -127,17 +134,22 @@ async def set_event_confirm_invalid(message: types.Message) -> None:
     await message.reply("Подтвердить? (да/нет)")
 
 
-async def set_event_confirm(message: types.Message, state: FSMContext) -> None:
-    """Перехватывает верный формат ответа со стейтом event_confirm
-    В зависимости от ответа создаёт или не создаёт событие
-    Обнуляет стейт
-    :param message: сообщение
-    :param state: стейт
-    """
-    if message.text.lower() == 'да':
-        await message.reply('Событие создано')
-    else:
-        await message.reply('Событие не создано')
+async def set_event_confirm(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        if message.text.lower() == 'да':
+            await message.reply('Событие создано')
+
+            scheduler.set_scheduler(
+                          message.bot,
+                          message.from_user.id,
+                          data['event_name'],
+                          data['event_date'],
+                          data['event_time'],
+                          data['event_comment']
+            )
+        else:
+            await message.reply('Событие не создано')
+
     await state.finish()
 
 
