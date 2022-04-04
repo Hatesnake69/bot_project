@@ -7,11 +7,10 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import CallbackQuery, ReplyKeyboardMarkup
 from aiogram_calendar import SimpleCalendar, simple_cal_callback
 
-from sсheduler import YScheduler
+from sсheduler import set_scheduler
 
 start_kb = ReplyKeyboardMarkup(resize_keyboard=True, )
 
-scheduler = YScheduler()
 
 class Form(StatesGroup):
     """
@@ -138,14 +137,13 @@ async def set_event_confirm(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         if message.text.lower() == 'да':
             await message.reply('Событие создано')
-
-            scheduler.set_scheduler(
-                          message.bot,
-                          message.from_user.id,
-                          data['event_name'],
-                          data['event_date'],
-                          data['event_time'],
-                          data['event_comment']
+            set_scheduler(
+                message.bot,
+                message.from_user.id,
+                data['event_name'],
+                data['event_date'],
+                data['event_time'],
+                data['event_comment']
             )
         else:
             await message.reply('Событие не создано')
