@@ -1,19 +1,20 @@
-from aiogram.types import CallbackQuery, ReplyKeyboardMarkup
-
 import re
 
-import aiogram.utils.markdown as md
 from aiogram import types, Dispatcher
-
-from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.types import CallbackQuery, ReplyKeyboardMarkup
 from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.state import State, StatesGroup
+import aiogram.utils.markdown as md
 
 from aiogram_calendar import SimpleCalendar, simple_cal_callback
 
-start_kb = ReplyKeyboardMarkup(resize_keyboard=True,)
+start_kb = ReplyKeyboardMarkup(resize_keyboard=True)
 
 
 class Form(StatesGroup):
+    """
+    Состояния для команды /create_event
+    """
     event_name = State()
     event_date = State()
     event_time = State()
@@ -21,72 +22,118 @@ class Form(StatesGroup):
     event_confirm = State()
 
 
-async def create_event_start(message: types.Message):
+async def create_event_start(message: types.Message) -> None:
+    """
+    Перехватывает сообщение с командой /create_event
+    Устанавливает стейт event_name
+    Спрашивает у пользователя название события
+    :param message: сообщение
+    """
     await Form.event_name.set()
     await message.reply("Привет!\nУкажи название события.")
 
 
-async def set_event_name(message: types.Message, state: FSMContext):
+async def set_event_name(message: types.Message, state: FSMContext) -> None:
+    """
+    Перехватывает сообщение со стейтом event_name
+    Записывает название события в state.proxy() по ключу "event_name"
+    Устанавливает следующее значение стейта event_date
+    Просит у пользователя выбрать дату и выводит календарик
+    :param message: сообщение
+    :param state: стейт
+    """
     async with state.proxy() as data:
         data['event_name'] = message.text
-
     await Form.next()
-    await message.answer(text="Please select a date: ", reply_markup=await SimpleCalendar().start_calendar())
+    await message.answer(text="Выберите дату: ", reply_markup=await SimpleCalendar().start_calendar())
 
 
-async def set_event_date(callback_query: CallbackQuery, callback_data, state: FSMContext):
+async def set_event_date(callback_query: CallbackQuery, callback_data, state: FSMContext) -> None:
+    """
+    Перехватывает событие нажимания на кнопку даты из календарика со стейтом event_date
+    Записывает значение нажатой кнопки в state.proxy() по ключу "event_date"
+    Устанавливает следующее значение стейта event_time
+    Просит у пользователя написать время
+    :param callback_query: callback_query
+    :param callback_data: callback_data
+    :param state: стейт
+    """
     selected, date = await SimpleCalendar().process_selection(callback_query, callback_data)
     if selected:
         await callback_query.message.answer(
-            f'You selected {date.strftime("%d/%m/%Y")}\nУкажи время события.',
+            f'Вы выбрали: {date.strftime("%d/%m/%Y")}',
+        )
+        await callback_query.message.answer(
+            f'Укажи время события в формате HH:MI'
         )
         async with state.proxy() as data:
             data['event_date'] = f'{date.strftime("%d/%m/%Y")}'
         await Form.next()
 
 
-async def set_event_time_invalid(message: types.Message):
+async def set_event_time_invalid(message: types.Message) -> None:
     """
-    If time is invalid
+    Перехватывает неверный формат времени со стейтом event_time
+    Просит ввести время в указанном формате
+    :param message: сообщение
     """
-    return await message.reply("Время должно быть в формате HH:MI")
+    await message.reply("Время должно быть в формате HH:MI")
 
 
-async def set_event_time(message: types.Message, state: FSMContext):
+async def set_event_time(message: types.Message, state: FSMContext) -> None:
+    """
+    Перехватывает верный ввод времени со стейтом event_time
+    Записывает в state.proxy() время по ключу "event_time"
+    Устанавливает стейт event_comment
+    Просит написать комментарий
+    :param message: сообщение
+    :param state: стейт
+    """
     async with state.proxy() as data:
         data['event_time'] = message.text
-
     await Form.next()
     await message.reply("Напиши комментарий.")
 
 
-async def set_event_comment(message: types.Message, state: FSMContext):
+async def set_event_comment(message: types.Message, state: FSMContext) -> None:
+    """
+    Перехватывает комментарий со стейтом event_comment
+    Записывает в state.proxy() комментарий по ключу "event_comment"
+    Спрашивает у пользователя верна ли введенная информация
+    Устанавливает стейт event_confirm
+    Просит подтверждения
+    :param message: сообщение
+    :param state: стейт
+    """
     async with state.proxy() as data:
         data['event_comment'] = message.text
-
-    await message.answer(
-                           md.text(
+    await message.answer(md.text(
                                md.text(message.chat.id),
                                md.text(data['event_name']),
                                md.text(data['event_date']),
                                md.text(data['event_time']),
                                md.text(data['event_comment']),
-                               sep='\n',
-                           ),
-                        )
-
+                               sep='\n'))
     await Form.next()
     await message.reply("Подтвердить? (да/нет)")
 
 
-async def set_event_confirm_invalid(message: types.Message):
+async def set_event_confirm_invalid(message: types.Message) -> None:
     """
-    If time is invalid
+    Перехватывает неверный формат ответа со стейтом event_confirm
+    Просит ввести ответ в указанном формате
+    :param message: сообщение
     """
-    return await message.reply("Подтвердить? (да/нет)")
+    await message.reply("Подтвердить? (да/нет)")
 
 
-async def set_event_confirm(message: types.Message, state: FSMContext):
+async def set_event_confirm(message: types.Message, state: FSMContext) -> None:
+    """Перехватывает верный формат ответа со стейтом event_confirm
+    В зависимости от ответа создаёт или не создаёт событие
+    Обнуляет стейт
+    :param message: сообщение
+    :param state: стейт
+    """
     if message.text.lower() == 'да':
         await message.reply('Событие создано')
     else:
@@ -94,7 +141,11 @@ async def set_event_confirm(message: types.Message, state: FSMContext):
     await state.finish()
 
 
-def register_handlers_create_event(dp: Dispatcher):
+def register_handlers_create_event(dp: Dispatcher) -> None:
+    """
+    Функция регистрирует функции выше, а также условия их выполнения
+    :param dp: диспатчер бота
+    """
     dp.register_message_handler(create_event_start, commands="create_event", state="*")
     dp.register_message_handler(set_event_name, state=Form.event_name)
     dp.register_callback_query_handler(set_event_date, simple_cal_callback.filter(), state=Form.event_date)
