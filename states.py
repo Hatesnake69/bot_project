@@ -1,5 +1,6 @@
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
+
 class BotStates(StatesGroup):
     """
     Класс описывает состояния функций
@@ -10,6 +11,7 @@ class BotStates(StatesGroup):
     STATE_1 -- активирует def email_message()
     STATE_2 -- активирует def key_message()
     """
+
     STATE_0 = State()
     STATE_1 = State()
     STATE_2 = State()

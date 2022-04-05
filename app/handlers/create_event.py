@@ -7,15 +7,18 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import CallbackQuery, ReplyKeyboardMarkup
 from aiogram_calendar import SimpleCalendar, simple_cal_callback
 
-from sсheduler import set_scheduler
+from scheduler import set_scheduler
 
-start_kb = ReplyKeyboardMarkup(resize_keyboard=True, )
+start_kb = ReplyKeyboardMarkup(
+    resize_keyboard=True,
+)
 
 
 class Form(StatesGroup):
     """
     Состояния для команды /create_event
     """
+
     event_name = State()
     event_date = State()
     event_time = State()
@@ -44,14 +47,20 @@ async def set_event_name(message: types.Message, state: FSMContext) -> None:
     :param state: стейт
     """
     async with state.proxy() as data:
-        data['event_name'] = message.text
+        data["event_name"] = message.text
     await Form.next()
-    await message.answer(text="Выберите дату: ", reply_markup=await SimpleCalendar().start_calendar())
+    await message.answer(
+        text="Выберите дату: ",
+        reply_markup=await SimpleCalendar().start_calendar()
+    )
 
 
-async def set_event_date(callback_query: CallbackQuery, callback_data, state: FSMContext) -> None:
+async def set_event_date(
+    callback_query: CallbackQuery, callback_data, state: FSMContext
+) -> None:
     """
-    Перехватывает событие нажимания на кнопку даты из календарика со стейтом event_date
+    Перехватывает событие нажимания на кнопку
+    даты из календарика со стейтом event_date
     Записывает значение нажатой кнопки в state.proxy() по ключу "event_date"
     Устанавливает следующее значение стейта event_time
     Просит у пользователя написать время
@@ -59,16 +68,18 @@ async def set_event_date(callback_query: CallbackQuery, callback_data, state: FS
     :param callback_data: callback_data
     :param state: стейт
     """
-    selected, date = await SimpleCalendar().process_selection(callback_query, callback_data)
+    selected, date = await SimpleCalendar().process_selection(
+        callback_query, callback_data
+    )
     if selected:
         await callback_query.message.answer(
             f'Вы выбрали: {date.strftime("%d/%m/%Y")}',
         )
         await callback_query.message.answer(
-            f'Укажи время события в формате HH:MI'
+            "Укажи время события в формате HH:MI"
         )
         async with state.proxy() as data:
-            data['event_date'] = f'{date.strftime("%d/%m/%Y")}'
+            data["event_date"] = f'{date.strftime("%d/%m/%Y")}'
         await Form.next()
 
 
@@ -91,7 +102,7 @@ async def set_event_time(message: types.Message, state: FSMContext) -> None:
     :param state: стейт
     """
     async with state.proxy() as data:
-        data['event_time'] = message.text
+        data["event_time"] = message.text
     await Form.next()
     await message.reply("Напиши комментарий.")
 
@@ -107,16 +118,16 @@ async def set_event_comment(message: types.Message, state: FSMContext) -> None:
     :param state: стейт
     """
     async with state.proxy() as data:
-        data['event_comment'] = message.text
+        data["event_comment"] = message.text
 
     await message.answer(
         md.text(
             md.text(message.chat.id),
-            md.text(data['event_name']),
-            md.text(data['event_date']),
-            md.text(data['event_time']),
-            md.text(data['event_comment']),
-            sep='\n',
+            md.text(data["event_name"]),
+            md.text(data["event_date"]),
+            md.text(data["event_time"]),
+            md.text(data["event_comment"]),
+            sep="\n",
         ),
     )
 
@@ -135,18 +146,18 @@ async def set_event_confirm_invalid(message: types.Message) -> None:
 
 async def set_event_confirm(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
-        if message.text.lower() == 'да':
-            await message.reply('Событие создано')
+        if message.text.lower() == "да":
+            await message.reply("Событие создано")
             set_scheduler(
                 message.bot,
                 message.from_user.id,
-                data['event_name'],
-                data['event_date'],
-                data['event_time'],
-                data['event_comment']
+                data["event_name"],
+                data["event_date"],
+                data["event_time"],
+                data["event_comment"],
             )
         else:
-            await message.reply('Событие не создано')
+            await message.reply("Событие не создано")
 
     await state.finish()
 
@@ -156,15 +167,24 @@ def register_handlers_create_event(dp: Dispatcher) -> None:
     Функция регистрирует функции выше, а также условия их выполнения
     :param dp: диспатчер бота
     """
-    dp.register_message_handler(create_event_start, commands="create_event", state="*")
+    dp.register_message_handler(create_event_start,
+                                commands="create_event", state="*")
     dp.register_message_handler(set_event_name, state=Form.event_name)
-    dp.register_callback_query_handler(set_event_date, simple_cal_callback.filter(), state=Form.event_date)
-    dp.register_message_handler(set_event_time_invalid,
-                                lambda message: not re.match(r'^(([01]\d|2[0-3]):([0-5]\d)|24:00)$', message.text),
-                                state=Form.event_time)
+    dp.register_callback_query_handler(
+        set_event_date, simple_cal_callback.filter(), state=Form.event_date
+    )
+    dp.register_message_handler(
+        set_event_time_invalid,
+        lambda message: not re.match(
+            r"^(([01]\d|2[0-3]):([0-5]\d)|24:00)$", message.text
+        ),
+        state=Form.event_time,
+    )
     dp.register_message_handler(set_event_time, state=Form.event_time)
     dp.register_message_handler(set_event_comment, state=Form.event_comment)
-    dp.register_message_handler(set_event_confirm_invalid,
-                                lambda message: message.text.lower() not in {'да', 'нет'},
-                                state=Form.event_confirm)
+    dp.register_message_handler(
+        set_event_confirm_invalid,
+        lambda message: message.text.lower() not in {"да", "нет"},
+        state=Form.event_confirm,
+    )
     dp.register_message_handler(set_event_confirm, state=Form.event_confirm)
