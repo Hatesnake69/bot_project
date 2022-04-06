@@ -3,17 +3,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import Message
 
 import keyboards as key
-from config import cache
-
-
-async def update_state(message, new_state, keyboard, state):
-    await cache.set_data(chat=message.chat,
-                         user=message.from_user.username,
-                         data=message.text)
-    await state.set_state(new_state)
-    await message.reply("choose",
-                        reply_markup=key.KEYBOARDS[keyboard],
-                        reply=False)
+from states import BotStates, update_state
 
 
 class HelpStates(StatesGroup):
@@ -32,140 +22,140 @@ class HelpStates(StatesGroup):
 
 async def process_start_command(message: Message, state: FSMContext):
     await update_state(message,
-                       HelpStates.INIT_FIRST_STATE,
+                       BotStates.INIT_FIRST_STATE,
                        "start",
                        state)
 
 
 async def fin_to_start_command(message: Message, state: FSMContext):
     await update_state(message,
-                       HelpStates.FIN_FIRST_STATE,
+                       BotStates.FIN_FIRST_STATE,
                        "fin_first",
                        state)
 
 
 async def fwd_to_second_command(message: Message, state: FSMContext):
     await update_state(message,
-                       HelpStates.FIN_SECOND_STATE,
+                       BotStates.FIN_SECOND_STATE,
                        "fin_second",
                        state)
 
 
 async def fin_bck_start_command(message: Message, state: FSMContext):
     await update_state(message,
-                       HelpStates.INIT_FIRST_STATE,
+                       BotStates.INIT_FIRST_STATE,
                        "start",
                        state)
 
 
 async def fin_fwd_third_command(message: Message, state: FSMContext):
     await update_state(message,
-                       HelpStates.FIN_THIRD_STATE,
+                       BotStates.FIN_THIRD_STATE,
                        "fin_third",
                        state)
 
 
 async def fin_bck_first_command(message: Message, state: FSMContext):
     await update_state(message,
-                       HelpStates.FIN_FIRST_STATE,
+                       BotStates.FIN_FIRST_STATE,
                        "fin_first",
                        state)
 
 
 async def fin_up_start_command(message: Message, state: FSMContext):
     await update_state(message,
-                       HelpStates.INIT_FIRST_STATE,
+                       BotStates.INIT_FIRST_STATE,
                        "start",
                        state)
 
 
 async def fin_bck_second_command(message: Message, state: FSMContext):
     await update_state(message,
-                       HelpStates.FIN_SECOND_STATE,
+                       BotStates.FIN_SECOND_STATE,
                        "fin_second",
                        state)
 
 
 async def fin_third_up_command(message: Message, state: FSMContext):
     await update_state(message,
-                       HelpStates.INIT_FIRST_STATE,
+                       BotStates.INIT_FIRST_STATE,
                        "start",
                        state)
 
 
 async def start_to_org_command(message: Message, state: FSMContext):
     await update_state(message,
-                       HelpStates.ORG_STATE,
+                       BotStates.ORG_STATE,
                        "org",
                        state)
 
 
 async def org_bck_start_command(message: Message, state: FSMContext):
     await update_state(message,
-                       HelpStates.INIT_FIRST_STATE,
+                       BotStates.INIT_FIRST_STATE,
                        "start",
                        state)
 
 
 async def start_to_acc_command(message: Message, state: FSMContext):
     await update_state(message,
-                       HelpStates.ACC_STATE,
+                       BotStates.ACC_STATE,
                        "acc",
                        state)
 
 
 async def acc_bck_start_command(message: Message, state: FSMContext):
     await update_state(message,
-                       HelpStates.INIT_FIRST_STATE,
+                       BotStates.INIT_FIRST_STATE,
                        "start",
                        state)
 
 
 async def tech_fwd_first_command(message: Message, state: FSMContext):
     await update_state(message,
-                       HelpStates.TECH_FIRST_STATE,
+                       BotStates.TECH_FIRST_STATE,
                        "tech_first",
                        state)
 
 
 async def tech_fwd_second_command(message: Message, state: FSMContext):
     await update_state(message,
-                       HelpStates.TECH_SECOND_STATE,
+                       BotStates.TECH_SECOND_STATE,
                        "tech_second",
                        state)
 
 
 async def tech_bck_start_command(message: Message, state: FSMContext):
     await update_state(message,
-                       HelpStates.INIT_FIRST_STATE,
+                       BotStates.INIT_FIRST_STATE,
                        "start",
                        state)
 
 
 async def tech_bck_first_command(message: Message, state: FSMContext):
     await update_state(message,
-                       HelpStates.TECH_FIRST_STATE,
+                       BotStates.TECH_FIRST_STATE,
                        "tech_first",
                        state)
 
 
 async def tech_up_start_command(message: Message, state: FSMContext):
     await update_state(message,
-                       HelpStates.INIT_FIRST_STATE,
+                       BotStates.INIT_FIRST_STATE,
                        "start",
                        state)
 
 
 async def start_to_oth_command(message: Message, state: FSMContext):
     await update_state(message,
-                       HelpStates.OTH_STATE,
+                       BotStates.OTH_STATE,
                        "oth",
                        state)
 
 
 async def oth_bck_start_command(message: Message, state: FSMContext):
     await update_state(message,
-                       HelpStates.INIT_FIRST_STATE,
+                       BotStates.INIT_FIRST_STATE,
                        "start",
                        state)
 
