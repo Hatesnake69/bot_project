@@ -1,10 +1,9 @@
 import re
 
-import aiogram.utils.markdown as md
-from aiogram import Dispatcher, types
-from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher import Dispatcher, FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.types import CallbackQuery, ReplyKeyboardMarkup
+from aiogram.types import CallbackQuery, Message, ReplyKeyboardMarkup
+from aiogram.utils.markdown import text
 from aiogram_calendar import SimpleCalendar, simple_cal_callback
 
 from scheduler import set_scheduler
@@ -26,7 +25,7 @@ class Form(StatesGroup):
     event_confirm = State()
 
 
-async def create_event_start(message: types.Message) -> None:
+async def create_event_start(message: Message) -> None:
     """
     Перехватывает сообщение с командой /create_event
     Устанавливает стейт event_name
@@ -37,7 +36,7 @@ async def create_event_start(message: types.Message) -> None:
     await message.reply("Привет!\nУкажи название события.")
 
 
-async def set_event_name(message: types.Message, state: FSMContext) -> None:
+async def set_event_name(message: Message, state: FSMContext) -> None:
     """
     Перехватывает сообщение со стейтом event_name
     Записывает название события в state.proxy() по ключу "event_name"
@@ -83,7 +82,7 @@ async def set_event_date(
         await Form.next()
 
 
-async def set_event_time_invalid(message: types.Message) -> None:
+async def set_event_time_invalid(message: Message) -> None:
     """
     Перехватывает неверный формат времени со стейтом event_time
     Просит ввести время в указанном формате
@@ -92,7 +91,7 @@ async def set_event_time_invalid(message: types.Message) -> None:
     await message.reply("Время должно быть в формате HH:MI")
 
 
-async def set_event_time(message: types.Message, state: FSMContext) -> None:
+async def set_event_time(message: Message, state: FSMContext) -> None:
     """
     Перехватывает верный ввод времени со стейтом event_time
     Записывает в state.proxy() время по ключу "event_time"
@@ -107,7 +106,7 @@ async def set_event_time(message: types.Message, state: FSMContext) -> None:
     await message.reply("Напиши комментарий.")
 
 
-async def set_event_comment(message: types.Message, state: FSMContext) -> None:
+async def set_event_comment(message: Message, state: FSMContext) -> None:
     """
     Перехватывает комментарий со стейтом event_comment
     Записывает в state.proxy() комментарий по ключу "event_comment"
@@ -121,12 +120,12 @@ async def set_event_comment(message: types.Message, state: FSMContext) -> None:
         data["event_comment"] = message.text
 
     await message.answer(
-        md.text(
-            md.text(message.chat.id),
-            md.text(data["event_name"]),
-            md.text(data["event_date"]),
-            md.text(data["event_time"]),
-            md.text(data["event_comment"]),
+        text(
+            text(message.chat.id),
+            text(data["event_name"]),
+            text(data["event_date"]),
+            text(data["event_time"]),
+            text(data["event_comment"]),
             sep="\n",
         ),
     )
@@ -135,7 +134,7 @@ async def set_event_comment(message: types.Message, state: FSMContext) -> None:
     await message.reply("Подтвердить? (да/нет)")
 
 
-async def set_event_confirm_invalid(message: types.Message) -> None:
+async def set_event_confirm_invalid(message: Message) -> None:
     """
     Перехватывает неверный формат ответа со стейтом event_confirm
     Просит ввести ответ в указанном формате
@@ -144,7 +143,7 @@ async def set_event_confirm_invalid(message: types.Message) -> None:
     await message.reply("Подтвердить? (да/нет)")
 
 
-async def set_event_confirm(message: types.Message, state: FSMContext):
+async def set_event_confirm(message: Message, state: FSMContext):
     async with state.proxy() as data:
         if message.text.lower() == "да":
             await message.reply("Событие создано")

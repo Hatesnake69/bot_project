@@ -1,7 +1,8 @@
 import pandas as pd
-from aiogram import types
-from config import CREDENTIALS_PATH, PROJECT, cache
+from aiogram.types import Message
 from google.oauth2 import service_account
+
+from config import CREDENTIALS_PATH, PROJECT, cache
 
 
 class DBManager:
@@ -17,7 +18,7 @@ class DBManager:
         from_service_account_file(CREDENTIALS_PATH)
     project = PROJECT
 
-    def check_user(self, message: types.Message) -> bool:
+    def check_user(self, message: Message) -> bool:
         """
         Возвращает True, если пользователь не зарегистрирован
         и можно работать дальше
@@ -36,7 +37,7 @@ class DBManager:
             return True
         return False
 
-    async def make_registration(self, message: types.Message) -> bool:
+    async def make_registration(self, message: Message) -> bool:
         """
         Возвращает True, если запись успешно создана, создает запись
 

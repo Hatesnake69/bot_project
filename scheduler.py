@@ -5,9 +5,6 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from utils import is_day_off
 
-
-# SCHEDULER = AsyncIOScheduler(timezone='Europe/Moscow')
-
 TODAY = date.today()
 
 scheduler = AsyncIOScheduler()
