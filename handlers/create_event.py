@@ -1,31 +1,19 @@
 import re
 
-from aiogram.dispatcher import Dispatcher, FSMContext
-from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardMarkup
 from aiogram.utils.markdown import text
 from aiogram_calendar import SimpleCalendar, simple_cal_callback
 
 from scheduler import set_scheduler
-from states import BotStates
-
-start_kb = ReplyKeyboardMarkup(
-    resize_keyboard=True,
-)
+from states import CreateEventForm
+from loader import dp
 
 
-class Form(StatesGroup):
-    """
-    Состояния для команды /create_event
-    """
-
-    event_name = State()
-    event_date = State()
-    event_time = State()
-    event_comment = State()
-    event_confirm = State()
+start_kb = ReplyKeyboardMarkup(resize_keyboard=True)
 
 
+@dp.message_handler(commands=["create_event"], state="*")
 async def create_event_start(message: Message) -> None:
     """
     Перехватывает сообщение с командой /create_event
@@ -33,10 +21,11 @@ async def create_event_start(message: Message) -> None:
     Спрашивает у пользователя название события
     :param message: сообщение
     """
-    await BotStates.EVENT_NAME.set()
+    await CreateEventForm.event_name.set()
     await message.reply("Привет!\nУкажи название события.")
 
 
+@dp.message_handler(state=CreateEventForm.event_name)
 async def set_event_name(message: Message, state: FSMContext) -> None:
     """
     Перехватывает сообщение со стейтом event_name
@@ -48,13 +37,16 @@ async def set_event_name(message: Message, state: FSMContext) -> None:
     """
     async with state.proxy() as data:
         data["event_name"] = message.text
-    await BotStates.next()
+    await CreateEventForm.next()
     await message.answer(
         text="Выберите дату: ",
         reply_markup=await SimpleCalendar().start_calendar()
     )
 
 
+@dp.callback_query_handler(
+    simple_cal_callback.filter(),
+    state=CreateEventForm.event_date)
 async def set_event_date(
         callback_query: CallbackQuery, callback_data, state: FSMContext
 ) -> None:
@@ -80,9 +72,14 @@ async def set_event_date(
         )
         async with state.proxy() as data:
             data["event_date"] = f'{date.strftime("%d/%m/%Y")}'
-        await BotStates.next()
+        await CreateEventForm.next()
 
 
+@dp.message_handler(
+    lambda message: not re.match(
+        r"^(([01]\d|2[0-3]):([0-5]\d)|24:00)$",
+        message.text),
+    state=CreateEventForm.event_time)
 async def set_event_time_invalid(message: Message) -> None:
     """
     Перехватывает неверный формат времени со стейтом event_time
@@ -92,6 +89,7 @@ async def set_event_time_invalid(message: Message) -> None:
     await message.reply("Время должно быть в формате HH:MI")
 
 
+@dp.message_handler(state=CreateEventForm.event_time)
 async def set_event_time(message: Message, state: FSMContext) -> None:
     """
     Перехватывает верный ввод времени со стейтом event_time
@@ -103,10 +101,11 @@ async def set_event_time(message: Message, state: FSMContext) -> None:
     """
     async with state.proxy() as data:
         data["event_time"] = message.text
-    await BotStates.next()
+    await CreateEventForm.next()
     await message.reply("Напиши комментарий.")
 
 
+@dp.message_handler(state=CreateEventForm.event_comment)
 async def set_event_comment(message: Message, state: FSMContext) -> None:
     """
     Перехватывает комментарий со стейтом event_comment
@@ -131,10 +130,13 @@ async def set_event_comment(message: Message, state: FSMContext) -> None:
         ),
     )
 
-    await BotStates.next()
+    await CreateEventForm.next()
     await message.reply("Подтвердить? (да/нет)")
 
 
+@dp.message_handler(
+    lambda message: message.text.lower() not in {"да", "нет"},
+    state=CreateEventForm.event_confirm)
 async def set_event_confirm_invalid(message: Message) -> None:
     """
     Перехватывает неверный формат ответа со стейтом event_confirm
@@ -144,6 +146,7 @@ async def set_event_confirm_invalid(message: Message) -> None:
     await message.reply("Подтвердить? (да/нет)")
 
 
+@dp.message_handler(state=CreateEventForm.event_confirm)
 async def set_event_confirm(message: Message, state: FSMContext):
     async with state.proxy() as data:
         if message.text.lower() == "да":
@@ -160,34 +163,3 @@ async def set_event_confirm(message: Message, state: FSMContext):
             await message.reply("Событие не создано")
 
     await state.finish()
-
-
-def register_handlers_create_event(dp: Dispatcher) -> None:
-    """
-    Функция регистрирует функции выше, а также условия их выполнения
-    :param dp: диспатчер бота
-    """
-    dp.register_message_handler(create_event_start,
-                                commands="create_event", state="*")
-    dp.register_message_handler(set_event_name, state=BotStates.EVENT_NAME)
-    dp.register_callback_query_handler(
-        set_event_date, simple_cal_callback.filter(),
-        state=BotStates.EVENT_DATE
-    )
-    dp.register_message_handler(
-        set_event_time_invalid,
-        lambda message: not re.match(
-            r"^(([01]\d|2[0-3]):([0-5]\d)|24:00)$", message.text
-        ),
-        state=BotStates.EVENT_TIME,
-    )
-    dp.register_message_handler(set_event_time, state=BotStates.EVENT_TIME)
-    dp.register_message_handler(set_event_comment,
-                                state=BotStates.EVENT_COMMENT)
-    dp.register_message_handler(
-        set_event_confirm_invalid,
-        lambda message: message.text.lower() not in {"да", "нет"},
-        state=BotStates.EVENT_CONFIRM,
-    )
-    dp.register_message_handler(set_event_confirm,
-                                state=BotStates.EVENT_CONFIRM)

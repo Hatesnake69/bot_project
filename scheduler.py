@@ -6,7 +6,7 @@ from aiogram.types import Message
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from google.oauth2 import service_account
 
-from app.db.db_service import DBManager
+from db.db_service import DBManager
 from config import CREDENTIALS_PATH, PROJECT
 from utils import is_day_off
 
