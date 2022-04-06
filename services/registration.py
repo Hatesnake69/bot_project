@@ -1,6 +1,6 @@
-import pandas as pd
-from aiogram import types
+from aiogram.types import Message
 from google.oauth2 import service_account
+from pandas import DataFrame, read_gbq
 
 from config import CREDENTIALS_PATH, PROJECT, cache
 
@@ -9,7 +9,7 @@ credentials = service_account.Credentials.from_service_account_file(
 )
 
 
-def check_user(message: types.Message) -> bool:
+def check_user(message: Message) -> bool:
     """
     Возвращает True, если пользователь
     не зарегистрирован и можно работать дальше
@@ -26,13 +26,13 @@ def check_user(message: types.Message) -> bool:
             f"WHERE telegram_id = {tg_id}"
     return (
         True
-        if pd.read_gbq(query, project_id=PROJECT,
-                       credentials=credentials).empty
+        if read_gbq(query, project_id=PROJECT,
+                    credentials=credentials).empty
         else False
     )
 
 
-async def make_registration(message: types.Message) -> bool:
+async def make_registration(message: Message) -> bool:
     """
     Возвращает True, если запись успешно создана, создает запись
 
@@ -46,7 +46,7 @@ async def make_registration(message: types.Message) -> bool:
                                 user=message.from_user.username)
     if check_user(message):
         try:
-            df = pd.DataFrame(
+            df = DataFrame(
                 {
                     "telegram_id": [message.from_user.id],
                     "telegram_name": [message.from_user.username],

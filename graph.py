@@ -1,8 +1,8 @@
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import pandas_gbq
-import seaborn as sns
+from matplotlib.pyplot import figure, savefig
+from numpy import arange
+from pandas import DataFrame, date_range, to_datetime
+from pandas_gbq import read_gbq
+from seaborn import histplot
 
 from config import PROJECT, credentials
 
@@ -66,7 +66,7 @@ def get_dataframe_for_graph(user_id, date):
         f" GROUP BY telegram_id, "
         f"trackdate, projectName order by trackdate "
     )
-    df = pandas_gbq.read_gbq(
+    df = read_gbq(
         sql_group_project, project_id=PROJECT, credentials=credentials
     )
 
@@ -88,10 +88,10 @@ def get_xlabel_for_graph(df):
     }
 
     set_date = set(df["trackdate"])
-    df_xlabel = pd.DataFrame(
-        {"trackdate": pd.date_range(start=min(set_date), end=max(set_date))}
+    df_xlabel = DataFrame(
+        {"trackdate": date_range(start=min(set_date), end=max(set_date))}
     )
-    df_xlabel["dayOfWeek"] = pd.to_datetime(
+    df_xlabel["dayOfWeek"] = to_datetime(
         df_xlabel["trackdate"]
     ).dt.dayofweek.map(
         DAY_OF_WEEK
@@ -115,8 +115,8 @@ def get_image(df, xlabel):
 
     """
 
-    fig = plt.figure(figsize=(16, 8))
-    g = sns.histplot(
+    fig = figure(figsize=(16, 8))
+    graph = histplot(
         df,
         x="trackdate",
         weights="time",
@@ -126,20 +126,20 @@ def get_image(df, xlabel):
     )
 
     # Установка тиков по оси X
-    mids = [rect.get_x() + rect.get_width() / 2 for rect in g.patches]
-    g.set_xticks(list(set(mids)))
-    g.set_xticklabels(xlabel.tolist())
+    mids = [rect.get_x() + rect.get_width() / 2 for rect in graph.patches]
+    graph.set_xticks(list(set(mids)))
+    graph.set_xticklabels(xlabel.tolist())
 
     # Установка тиков по оси Y
     max_hour = max(df.groupby(["trackdate"])["time"].sum())
-    g.set_yticks(np.arange(0, max_hour + 1, 1))
+    graph.set_yticks(arange(0, max_hour + 1, 1))
 
     # Добавление подписи по осям
-    g.set_xlabel("Дни")
-    g.set_ylabel("Часы")
+    graph.set_xlabel("Дни")
+    graph.set_ylabel("Часы")
 
     # Поворот тиков на оси Х
     fig.autofmt_xdate()
 
     # Сохранение в файл
-    plt.savefig("saved_graph.png")
+    savefig("saved_graph.png")
