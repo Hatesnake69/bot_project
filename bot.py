@@ -10,7 +10,7 @@ from app.handlers.common import register_handlers_common
 from app.handlers.create_event import register_handlers_create_event
 from app.handlers.faq import register_handlers_faq
 from graph import get_dataframe_for_graph, get_image, get_xlabel_for_graph
-from scheduler import TODAY, scheduler, start_sheduler
+from scheduler import SCHEDULER, TODAY, start_sheduler
 
 bot = Bot(token=config.BOT_TOKEN)
 dp = Dispatcher(bot=bot, storage=config.cache)
@@ -61,11 +61,11 @@ async def on_startup(dp: Dispatcher):
 
 
 if __name__ == "__main__":
-    scheduler.start()
+    SCHEDULER.start()
     executor.start_polling(dp)
-    executor.start_webhook(dispatcher=dp,
-                           webhook_path=config.WEBHOOK_PATH,
-                           on_startup=on_startup,
-                           skip_updates=True,
-                           host=config.WEBAPP_HOST,
-                           port=config.WEBAPP_PORT)
+    # executor.start_webhook(dispatcher=dp,
+    #                        webhook_path=config.WEBHOOK_PATH,
+    #                        on_startup=on_startup,
+    #                        skip_updates=True,
+    #                        host=config.WEBAPP_HOST,
+    #                        port=config.WEBAPP_PORT)

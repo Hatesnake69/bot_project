@@ -2,28 +2,21 @@
 Модуль содержит обработчики, осуществляющие регистрацию новых
 пользователей по электронной почте, посредством команды /reg
 """
+
 from aiogram.dispatcher import Dispatcher, FSMContext
-from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import Message
 
 from config import cache
 from maildelivery import gen_secret_key, sending_message
 from services.registration import make_registration
-
-
-class RegForm(StatesGroup):
-    """
-    Класс описывает состояния функций, отвечающих за регистрацию
-    """
-    email_message = State()
-    key_message = State()
+from states import BotStates
 
 
 async def process_reg_command(message: Message):
     await message.answer("Здравствуйте, напишите адрес свой электронной почты "
                          "в домене @ylab.io для прохождения дальнейшей "
                          "регистрации!")
-    await RegForm.email_message.set()
+    await BotStates.EMAIL_MESSAGE.set()
 
 
 async def send_email_message(message: Message):
@@ -39,7 +32,7 @@ async def send_email_message(message: Message):
                                 user=message.from_user.username,
                                 data={'email': message.text})
 
-        await RegForm.key_message.set()
+        await BotStates.KEY_MESSAGE.set()
     else:
         await message.answer("Вы ввели не корректный адрес")
 
@@ -61,6 +54,6 @@ def register_handlers_authorization(dp: Dispatcher):
     dp.register_message_handler(process_reg_command,
                                 commands="reg", state="*")
     dp.register_message_handler(send_email_message,
-                                state=RegForm.email_message)
+                                state=BotStates.EMAIL_MESSAGE)
     dp.register_message_handler(input_key_message,
-                                state=RegForm.key_message)
+                                state=BotStates.KEY_MESSAGE)

@@ -7,6 +7,7 @@ from aiogram.utils.markdown import text
 from aiogram_calendar import SimpleCalendar, simple_cal_callback
 
 from scheduler import set_scheduler
+from states import BotStates
 
 start_kb = ReplyKeyboardMarkup(
     resize_keyboard=True,
@@ -32,7 +33,7 @@ async def create_event_start(message: Message) -> None:
     Спрашивает у пользователя название события
     :param message: сообщение
     """
-    await Form.event_name.set()
+    await BotStates.EVENT_NAME.set()
     await message.reply("Привет!\nУкажи название события.")
 
 
@@ -47,7 +48,7 @@ async def set_event_name(message: Message, state: FSMContext) -> None:
     """
     async with state.proxy() as data:
         data["event_name"] = message.text
-    await Form.next()
+    await BotStates.next()
     await message.answer(
         text="Выберите дату: ",
         reply_markup=await SimpleCalendar().start_calendar()
@@ -55,7 +56,7 @@ async def set_event_name(message: Message, state: FSMContext) -> None:
 
 
 async def set_event_date(
-    callback_query: CallbackQuery, callback_data, state: FSMContext
+        callback_query: CallbackQuery, callback_data, state: FSMContext
 ) -> None:
     """
     Перехватывает событие нажимания на кнопку
@@ -79,7 +80,7 @@ async def set_event_date(
         )
         async with state.proxy() as data:
             data["event_date"] = f'{date.strftime("%d/%m/%Y")}'
-        await Form.next()
+        await BotStates.next()
 
 
 async def set_event_time_invalid(message: Message) -> None:
@@ -102,7 +103,7 @@ async def set_event_time(message: Message, state: FSMContext) -> None:
     """
     async with state.proxy() as data:
         data["event_time"] = message.text
-    await Form.next()
+    await BotStates.next()
     await message.reply("Напиши комментарий.")
 
 
@@ -130,7 +131,7 @@ async def set_event_comment(message: Message, state: FSMContext) -> None:
         ),
     )
 
-    await Form.next()
+    await BotStates.next()
     await message.reply("Подтвердить? (да/нет)")
 
 
@@ -148,7 +149,7 @@ async def set_event_confirm(message: Message, state: FSMContext):
         if message.text.lower() == "да":
             await message.reply("Событие создано")
             set_scheduler(
-                message.bot,
+                message,
                 message.from_user.id,
                 data["event_name"],
                 data["event_date"],
@@ -168,22 +169,25 @@ def register_handlers_create_event(dp: Dispatcher) -> None:
     """
     dp.register_message_handler(create_event_start,
                                 commands="create_event", state="*")
-    dp.register_message_handler(set_event_name, state=Form.event_name)
+    dp.register_message_handler(set_event_name, state=BotStates.EVENT_NAME)
     dp.register_callback_query_handler(
-        set_event_date, simple_cal_callback.filter(), state=Form.event_date
+        set_event_date, simple_cal_callback.filter(),
+        state=BotStates.EVENT_DATE
     )
     dp.register_message_handler(
         set_event_time_invalid,
         lambda message: not re.match(
             r"^(([01]\d|2[0-3]):([0-5]\d)|24:00)$", message.text
         ),
-        state=Form.event_time,
+        state=BotStates.EVENT_TIME,
     )
-    dp.register_message_handler(set_event_time, state=Form.event_time)
-    dp.register_message_handler(set_event_comment, state=Form.event_comment)
+    dp.register_message_handler(set_event_time, state=BotStates.EVENT_TIME)
+    dp.register_message_handler(set_event_comment,
+                                state=BotStates.EVENT_COMMENT)
     dp.register_message_handler(
         set_event_confirm_invalid,
         lambda message: message.text.lower() not in {"да", "нет"},
-        state=Form.event_confirm,
+        state=BotStates.EVENT_CONFIRM,
     )
-    dp.register_message_handler(set_event_confirm, state=Form.event_confirm)
+    dp.register_message_handler(set_event_confirm,
+                                state=BotStates.EVENT_CONFIRM)

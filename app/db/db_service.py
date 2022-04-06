@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pandas as pd
 from aiogram.types import Message
 from google.oauth2 import service_account
@@ -67,3 +69,43 @@ class DBManager:
             except (Exception,):
                 return False
         return False
+
+    def send_task_to_bq(self,
+                        user_id:
+                        int, message_text: str,
+                        planned_at: datetime,
+                        created_at: datetime):
+        """
+            Отправляет данные о событии в хранилище BigQuery
+
+            :param user_id: id пользователя
+            :param message_text: текст дл напоминания
+            :param planned_at: дата события
+            :param created_at: время создания
+        """
+
+        try:
+            schema = [
+                {"name": "telegram_id", "type": "INTEGER"},
+                {"name": "message_text", "type": "STRING"},
+                {"name": "planned_at", "type": "DATETIME"},
+                {"name": "is_sent", "type": "BOOLEAN"},
+                {"name": "created_at", "type": "DATETIME"}
+            ]
+            df = pd.DataFrame({"telegram_id": [user_id],
+                               "message_text": [message_text],
+                               "planned_at": [planned_at],
+                               "is_sent": [True],
+                               "created_at": [created_at]
+                               })
+
+            df.to_gbq("handy-digit-312214.TG_Bot_Stager.remind_msg",
+                      project_id=PROJECT,
+                      credentials=self.credentials,
+                      if_exists="append",
+                      table_schema=schema)
+
+            return True
+        except Exception as e:
+            print(e.args)
+            return False
