@@ -14,7 +14,7 @@ def is_day_off(date: datetime.date) -> bool:
     """
 
     year, month, day = date.year, date.month, date.day
-    link = f'https://isdayoff.ru/api/getdata?year={year}\
-           &month={month}&day={day}'
+    link = f"https://isdayoff.ru/api/getdata?year={year}\
+           &month={month}&day={day}"
     response = requests.get(link)
-    return True if response.ok and response.text != '0' else False
+    return True if response.ok and response.text != "0" else False

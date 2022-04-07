@@ -20,6 +20,7 @@ WEBAPP_HOST: str = getenv("WEBAPP_HOST")
 WEBAPP_PORT: str = getenv("WEBAPP_PORT")
 CREDENTIALS_PATH: str = getenv("CREDENTIALS_PATH")  # BigQuery
 PROJECT: str = getenv("PROJECT")  # BigQuery
+TIMEZONE: str = getenv("TIMEZONE")
 
 cache = RedisStorage2(host=REDIS_HOST, port=int(REDIS_PORT))
 webhook_url = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
