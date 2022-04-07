@@ -78,7 +78,7 @@ class DBManager:
                            "regiestred_at": [date]
                            })
         try:
-            df.to_gbq("SELECT handy-digit-312214.TG_Bot_Stager.users",
+            df.to_gbq("handy-digit-312214.TG_Bot_Stager.users",
                       project_id=self.project,
                       credentials=self.credentials,
                       if_exists="append")
