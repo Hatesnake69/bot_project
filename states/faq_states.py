@@ -1,7 +1,10 @@
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
 
-class HelpStates(StatesGroup):
+class FaqStates(StatesGroup):
+    """
+    Класс описывает состояния функций, отвечающих за FAQ
+    """
     INIT_FIRST_STATE = State()
     INIT_SECOND_STATE = State()
     INIT_THIRD_STATE = State()

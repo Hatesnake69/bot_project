@@ -5,10 +5,9 @@ from aiogram.types import CallbackQuery, Message, ReplyKeyboardMarkup
 from aiogram.utils.markdown import text
 from aiogram_calendar import SimpleCalendar, simple_cal_callback
 
+from loader import dp
 from scheduler import set_scheduler
 from states import CreateEventForm
-from loader import dp
-
 
 start_kb = ReplyKeyboardMarkup(resize_keyboard=True)
 
@@ -37,7 +36,9 @@ async def set_event_name(message: Message, state: FSMContext) -> None:
     """
     async with state.proxy() as data:
         data["event_name"] = message.text
+
     await CreateEventForm.next()
+
     await message.answer(
         text="Выберите дату: ",
         reply_markup=await SimpleCalendar().start_calendar()
@@ -73,6 +74,7 @@ async def set_event_date(
         )
         async with state.proxy() as data:
             data["event_date"] = f'{date.strftime("%d/%m/%Y")}'
+
         await CreateEventForm.next()
 
 
@@ -88,6 +90,7 @@ async def set_event_time(message: Message, state: FSMContext) -> None:
     :param message: сообщение
     :param state: стейт
     """
+
     if re.match(r"^(([01]\d|2[0-3]):([0-5]\d)|24:00)$", message.text):
         async with state.proxy() as data:
             data["event_time"] = message.text
@@ -122,6 +125,7 @@ async def set_event_comment(message: Message, state: FSMContext) -> None:
         ),
     )
     await CreateEventForm.next()
+
     await message.reply("Подтвердить? (да/нет)")
 
 

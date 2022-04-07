@@ -4,7 +4,7 @@ from pandas import DataFrame, date_range, to_datetime
 from pandas_gbq import read_gbq
 from seaborn import histplot
 
-from config import PROJECT, credentials
+from data import PROJECT, credentials
 
 
 def get_salary_period(today):

@@ -6,11 +6,11 @@
 from aiogram.dispatcher import FSMContext
 from aiogram.types import Message
 
-from config import cache
-from maildelivery import gen_secret_key, sending_message
+from data import cache
+from loader import dp
+from services import gen_secret_key, sending_message
 from services.registration import make_registration
 from states import RegForm
-from loader import dp
 
 
 @dp.message_handler(commands=["reg"], state="*")
@@ -18,10 +18,10 @@ async def process_reg_command(message: Message):
     await message.answer("Здравствуйте, напишите адрес свой электронной почты "
                          "в домене @ylab.io для прохождения дальнейшей "
                          "регистрации!")
-    await RegForm.email_message.set()
+    await RegForm.EMAIL_MESSAGE.set()
 
 
-@dp.message_handler(state=RegForm.email_message)
+@dp.message_handler(state=RegForm.EMAIL_MESSAGE)
 async def send_email_message(message: Message):
     secret_key = gen_secret_key()
     await cache.set_data(chat=message.chat,
@@ -35,12 +35,12 @@ async def send_email_message(message: Message):
                                 user=message.from_user.username,
                                 data={'email': message.text})
 
-        await RegForm.key_message.set()
+        await RegForm.KEY_MESSAGE.set()
     else:
         await message.answer("Вы ввели не корректный адрес")
 
 
-@dp.message_handler(state=RegForm.key_message)
+@dp.message_handler(state=RegForm.KEY_MESSAGE)
 async def input_key_message(message: Message, state: FSMContext):
     secret_key = await cache.get_data(chat=message.chat,
                                       user=message.from_user.username)

@@ -2,11 +2,11 @@ import pandas_gbq
 from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
 
-import config
+import data
 import handlers
 from graph import get_dataframe_for_graph, get_image, get_xlabel_for_graph
-from scheduler import SCHEDULER, TODAY, start_sheduler
 from loader import bot, dp
+from scheduler import SCHEDULER, TODAY, start_sheduler
 
 
 @dp.message_handler()
@@ -17,7 +17,7 @@ async def scheduled_all():
     query_users = """ SELECT DISTINCT telegram_id, fullname
          FROM TG_Bot_Stager.salaryDetailsByTrackdate """
     df_users = pandas_gbq.read_gbq(
-        query_users, project_id=config.PROJECT, credentials=config.credentials
+        query_users, project_id=data.PROJECT, credentials=data.credentials
     )
 
     for user_id in df_users.telegram_id:
@@ -37,7 +37,7 @@ start_sheduler(scheduled_all)
 
 
 async def on_startup(dp: Dispatcher):
-    await bot.set_webhook(config.webhook_url)
+    await bot.set_webhook(data.webhook_url)
 
 
 if __name__ == "__main__":
