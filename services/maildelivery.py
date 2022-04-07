@@ -4,7 +4,7 @@ from secrets import choice
 from smtplib import SMTP, SMTPDataError
 from string import ascii_letters, digits
 
-from config import FROM_EMAIL, PASSWORD
+from data import FROM_EMAIL, PASSWORD
 
 
 def gen_secret_key() -> str:

@@ -1,9 +1,10 @@
 from datetime import datetime
+
 import pandas as pd
 from aiogram.types import Message
 from google.oauth2 import service_account
 
-from config import CREDENTIALS_PATH, PROJECT
+from data import CREDENTIALS_PATH, PROJECT
 
 
 class DBManager:
@@ -15,7 +16,7 @@ class DBManager:
     project (str): название проекта
     """
 
-    credentials = service_account.Credentials.\
+    credentials = service_account.Credentials. \
         from_service_account_file(CREDENTIALS_PATH)
     project = PROJECT
 

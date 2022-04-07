@@ -1,9 +1,9 @@
-from aiogram.dispatcher.filters.state import StatesGroup, State
+from aiogram.dispatcher.filters.state import State, StatesGroup
 
 
 class RegForm(StatesGroup):
     """
     Класс описывает состояния функций, отвечающих за регистрацию
     """
-    email_message = State()
-    key_message = State()
+    EMAIL_MESSAGE = State()
+    KEY_MESSAGE = State()

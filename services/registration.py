@@ -2,7 +2,7 @@ from aiogram.types import Message
 from google.oauth2 import service_account
 from pandas import DataFrame, read_gbq
 
-from config import CREDENTIALS_PATH, PROJECT, cache
+from data import CREDENTIALS_PATH, PROJECT, cache
 
 credentials = service_account.Credentials.from_service_account_file(
     CREDENTIALS_PATH

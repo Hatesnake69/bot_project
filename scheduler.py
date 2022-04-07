@@ -6,9 +6,9 @@ from aiogram.types import Message
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from google.oauth2 import service_account
 
-from db.db_service import DBManager
-from config import CREDENTIALS_PATH, PROJECT
-from utils import is_day_off
+from data import CREDENTIALS_PATH, PROJECT
+from services import is_day_off
+from utils import db
 
 SCHEDULER = AsyncIOScheduler(timezone='Europe/Moscow')
 
@@ -93,7 +93,7 @@ def set_scheduler(message: Message,
     reminder_time = event_date - timedelta(minutes=30)
     created_at = datetime.now()
 
-    db_manager = DBManager()
+    db_manager = db.DBManager()
     if db_manager.send_task_to_bq(
                        user_id,
                        text_for_scheduler,
