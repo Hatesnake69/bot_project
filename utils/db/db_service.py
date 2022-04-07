@@ -39,6 +39,25 @@ class DBManager:
             return True
         return False
 
+    def check_auth(self, message: Message) -> bool:
+        """
+        Возвращает True, если пользователь не аутентифицирован
+        и можно работать дальше
+
+        :param message: сообщение пользователя
+        :type message: Message
+
+        :rtype: bool
+        """
+
+        tg_id = int(message.from_user.id)
+        query = f"SELECT telegram_id FROM handy-digit-312214.TG_Bot_Stager.\
+                users WHERE telegram_id = {tg_id} AND is_confirmed = false"
+        if pd.read_gbq(query, project_id=self.project,
+                       credentials=self.credentials).empty:
+            return True
+        return False
+
     def registration(self, message: Message) -> None:
         """
         Записывает пользователя
@@ -59,16 +78,16 @@ class DBManager:
                            "regiestred_at": [date]
                            })
         try:
-            df.to_gbq("handy-digit-312214.TG_Bot_Stager.users",
+            df.to_gbq("SELECT handy-digit-312214.TG_Bot_Stager.users",
                       project_id=self.project,
                       credentials=self.credentials,
                       if_exists="append")
         except Exception as e:
             print(e.args)
 
-    def authentication(self, message: Message):
+    def authentication(self, message: Message) -> None:
         """
-        Аутенцифицирует пользователя
+        Аутентифицирует пользователя
 
         :param message: сообщение пользователя из которого ожидается
         secret key
