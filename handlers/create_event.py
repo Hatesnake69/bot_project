@@ -1,5 +1,7 @@
 import re
 
+import datetime
+
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardMarkup
 from aiogram.utils.markdown import text
@@ -62,9 +64,9 @@ async def set_event_date(
     :param state: стейт
     """
     selected, date = await SimpleCalendar().process_selection(
-        callback_query, callback_data
-    )
-    if selected:
+        callback_query, callback_data)
+
+    if selected and date_check(date):
         await callback_query.message.answer(
             f'Вы выбрали: {date.strftime("%d/%m/%Y")}',
         )
@@ -75,6 +77,12 @@ async def set_event_date(
             data["event_date"] = f'{date.strftime("%d/%m/%Y")}'
 
         await CreateEventForm.next()
+
+    else:
+        await callback_query.message.answer(
+            text="Выберите дату не раньше сегодняшнего числа: ",
+            reply_markup=await SimpleCalendar().start_calendar()
+        )
 
 
 @dp.message_handler(state=CreateEventForm.event_time)
@@ -92,9 +100,21 @@ async def set_event_time(message: Message, state: FSMContext) -> None:
 
     if re.match(r"^(([01]\d|2[0-3]):([0-5]\d)|24:00)$", message.text):
         async with state.proxy() as data:
-            data["event_time"] = message.text
-        await CreateEventForm.next()
-        await message.reply("Напиши комментарий.")
+            date_and_time = datetime.datetime.strptime(
+                data["event_date"],
+                "%d/%m/%Y")
+            time = datetime.timedelta(
+                hours=int(message.text.split(':')[0]),
+                minutes=int(message.text.split(':')[1]))
+            date_and_time += time
+            if date_check(date_and_time):
+                data["event_time"] = message.text
+                await CreateEventForm.next()
+                await message.reply("Напиши комментарий.")
+            else:
+                await message.reply(
+                    "Время должно быть в формате HH:MI"
+                    "\nА также не раньше, чем сейчас.")
     else:
         await message.reply("Время должно быть в формате HH:MI")
 
@@ -147,3 +167,12 @@ async def set_event_confirm(message: Message, state: FSMContext):
         await state.finish()
     else:
         await message.reply("Подтвердить? (да/нет)")
+
+
+def date_check(date):
+    date_now = datetime.datetime.now()
+    date_now += datetime.timedelta(hours=3)
+    if date.time() == datetime.time(hour=0, minute=0):
+        return date.date() >= date_now.date()
+    else:
+        return date > date_now
