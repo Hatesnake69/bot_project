@@ -1,10 +1,9 @@
 from matplotlib.pyplot import figure, savefig
 from numpy import arange
 from pandas import DataFrame, date_range, to_datetime
-from pandas_gbq import read_gbq
 from seaborn import histplot
 
-from data import PROJECT, credentials
+from utils import db
 
 
 def get_salary_period(today):
@@ -39,9 +38,10 @@ def get_salary_period(today):
         salary_period = f"Аванс-{DAY_OF_WEEK[month]}{year}"
         return salary_period
     else:
-        salary_period = f"ЗП-" \
-                        f"{DAY_OF_WEEK[month - 1 if month - 1 != 0 else 12]}" \
-                        f"{year}"
+        salary_period = (
+            f"ЗП-" f"{DAY_OF_WEEK[month - 1 if month - 1 != 0 else 12]}"
+            f"{year}"
+        )
         return salary_period
 
 
@@ -56,21 +56,10 @@ def get_dataframe_for_graph(user_id, date):
      :type date: datetime.date
 
     """
-
+    db_manager = db.DBManager()
     salary_period = get_salary_period(date)
-    sql_group_project = (
-        f"SELECT  trackdate, projectName, SUM(timefact) AS time FROM "
-        f"TG_Bot_Stager.salaryDetailsByTrackdate  "
-        f"WHERE  telegram_id = {user_id} and salaryPeriod = "
-        f"'{salary_period}' OR notApprovedSalaryPeriod  = '{salary_period}'"
-        f" GROUP BY telegram_id, "
-        f"trackdate, projectName order by trackdate "
-    )
-    df = read_gbq(
-        sql_group_project, project_id=PROJECT, credentials=credentials
-    )
 
-    return df
+    return db_manager.get_df_for_graph(user_id, salary_period)
 
 
 def get_xlabel_for_graph(df):
@@ -91,14 +80,12 @@ def get_xlabel_for_graph(df):
     df_xlabel = DataFrame(
         {"trackdate": date_range(start=min(set_date), end=max(set_date))}
     )
-    df_xlabel["dayOfWeek"] = to_datetime(
-        df_xlabel["trackdate"]
-    ).dt.dayofweek.map(
+    df_xlabel["dayOfWeek"] = to_datetime(df_xlabel.trackdate).dt.dayofweek.\
+        map(
         DAY_OF_WEEK
     )
     df_xlabel["xticklabels"] = (
-            df_xlabel["trackdate"].astype(str) +
-            "(" + df_xlabel.dayOfWeek + ")"
+        df_xlabel["trackdate"].astype(str) + "(" + df_xlabel.dayOfWeek + ")"
     )
 
     return df_xlabel.xticklabels

@@ -5,10 +5,9 @@ from aiogram.types import CallbackQuery, Message, ReplyKeyboardMarkup
 from aiogram.utils.markdown import text
 from aiogram_calendar import SimpleCalendar, simple_cal_callback
 
-from loader import dp
-from scheduler import set_scheduler
+from services.scheduler import set_scheduler
 from states import CreateEventForm
-
+from loader import dp
 start_kb = ReplyKeyboardMarkup(resize_keyboard=True)
 
 

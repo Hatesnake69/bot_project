@@ -8,7 +8,7 @@ from aiogram.types import Message
 
 from data import cache
 from loader import dp
-from services import gen_secret_key, sending_message
+from services.maildelivery import gen_secret_key, sending_message
 from services.registration import make_registration
 from states import RegForm
 
