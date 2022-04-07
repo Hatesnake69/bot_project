@@ -48,8 +48,9 @@ async def set_event_name(message: Message, state: FSMContext) -> None:
     simple_cal_callback.filter(),
     state=CreateEventForm.event_date)
 async def set_event_date(
-        callback_query: CallbackQuery, callback_data, state: FSMContext
-) -> None:
+        callback_query: CallbackQuery,
+        callback_data,
+        state: FSMContext) -> None:
     """
     Перехватывает событие нажимания на кнопку
     даты из календарика со стейтом event_date
@@ -68,41 +69,32 @@ async def set_event_date(
             f'Вы выбрали: {date.strftime("%d/%m/%Y")}',
         )
         await callback_query.message.answer(
-            "Укажи время события в формате HH:MI"
+            "Укажите время события в формате HH:MI"
         )
         async with state.proxy() as data:
             data["event_date"] = f'{date.strftime("%d/%m/%Y")}'
         await CreateEventForm.next()
 
 
-@dp.message_handler(
-    lambda message: not re.match(
-        r"^(([01]\d|2[0-3]):([0-5]\d)|24:00)$",
-        message.text),
-    state=CreateEventForm.event_time)
-async def set_event_time_invalid(message: Message) -> None:
-    """
-    Перехватывает неверный формат времени со стейтом event_time
-    Просит ввести время в указанном формате
-    :param message: сообщение
-    """
-    await message.reply("Время должно быть в формате HH:MI")
-
-
 @dp.message_handler(state=CreateEventForm.event_time)
 async def set_event_time(message: Message, state: FSMContext) -> None:
     """
-    Перехватывает верный ввод времени со стейтом event_time
+    Перехватывает ввод времени со стейтом event_time
+    Если формат верный, то
     Записывает в state.proxy() время по ключу "event_time"
+    Иначе отправляет просьбу соблюсти формат
     Устанавливает стейт event_comment
     Просит написать комментарий
     :param message: сообщение
     :param state: стейт
     """
-    async with state.proxy() as data:
-        data["event_time"] = message.text
-    await CreateEventForm.next()
-    await message.reply("Напиши комментарий.")
+    if re.match(r"^(([01]\d|2[0-3]):([0-5]\d)|24:00)$", message.text):
+        async with state.proxy() as data:
+            data["event_time"] = message.text
+        await CreateEventForm.next()
+        await message.reply("Напиши комментарий.")
+    else:
+        await message.reply("Время должно быть в формате HH:MI")
 
 
 @dp.message_handler(state=CreateEventForm.event_comment)
@@ -129,37 +121,26 @@ async def set_event_comment(message: Message, state: FSMContext) -> None:
             sep="\n",
         ),
     )
-
     await CreateEventForm.next()
-    await message.reply("Подтвердить? (да/нет)")
-
-
-@dp.message_handler(
-    lambda message: message.text.lower() not in {"да", "нет"},
-    state=CreateEventForm.event_confirm)
-async def set_event_confirm_invalid(message: Message) -> None:
-    """
-    Перехватывает неверный формат ответа со стейтом event_confirm
-    Просит ввести ответ в указанном формате
-    :param message: сообщение
-    """
     await message.reply("Подтвердить? (да/нет)")
 
 
 @dp.message_handler(state=CreateEventForm.event_confirm)
 async def set_event_confirm(message: Message, state: FSMContext):
-    async with state.proxy() as data:
-        if message.text.lower() == "да":
-            await message.reply("Событие создано")
-            set_scheduler(
-                message,
-                message.from_user.id,
-                data["event_name"],
-                data["event_date"],
-                data["event_time"],
-                data["event_comment"],
-            )
-        else:
-            await message.reply("Событие не создано")
-
-    await state.finish()
+    if message.text.lower() in {"да", "нет"}:
+        async with state.proxy() as data:
+            if message.text.lower() == "да":
+                await message.reply("Событие создано")
+                set_scheduler(
+                    message,
+                    message.from_user.id,
+                    data["event_name"],
+                    data["event_date"],
+                    data["event_time"],
+                    data["event_comment"],
+                )
+            else:
+                await message.reply("Событие не создано")
+        await state.finish()
+    else:
+        await message.reply("Подтвердить? (да/нет)")
