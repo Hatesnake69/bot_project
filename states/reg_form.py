@@ -1,7 +1,7 @@
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
 
-class RegForm(StatesGroup):
+class RegStates(StatesGroup):
     """
     Класс описывает состояния функций, отвечающих за регистрацию
     """

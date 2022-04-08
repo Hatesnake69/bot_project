@@ -8,15 +8,6 @@ from string import ascii_letters, digits
 from data.config import FROM_EMAIL, PASSWORD
 
 
-def gen_secret_key() -> str:
-    """
-    Функция генерирует секретный ключ
-    """
-    alphabet = ascii_letters + digits
-    secret_key = "".join(choice(alphabet) for i in range(8))
-    return secret_key
-
-
 def sending_message(to_email, secret_key):
     """
     Функции отправляет письмо на почту пользователя,
