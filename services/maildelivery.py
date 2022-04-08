@@ -5,7 +5,7 @@ from secrets import choice
 from smtplib import SMTP, SMTPDataError
 from string import ascii_letters, digits
 
-from data import FROM_EMAIL, PASSWORD
+from data.config import FROM_EMAIL, PASSWORD
 
 
 def gen_secret_key() -> str:
@@ -24,11 +24,11 @@ def sending_message(to_email, secret_key):
     """
     try:
 
-        with open("index.html", "r") as file:
+        with open("services/index.html", "r") as file:
             template_old = file.read()
             template_new = re.sub(
                 r"Проверочный код \w+",
-                f"Проверочный код {secret_key}", template_old
+                f"{secret_key}", template_old
             )
             with open("index.html", "w") as f:
                 f.write(template_new)
