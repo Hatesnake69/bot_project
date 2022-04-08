@@ -1,6 +1,8 @@
 from os import getenv
 
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
+from apscheduler.executors.asyncio import AsyncIOExecutor
+from apscheduler.jobstores.redis import RedisJobStore
 from dotenv import load_dotenv
 from google.oauth2 import service_account
 
@@ -24,6 +26,15 @@ TIMEZONE: str = getenv("TIMEZONE")
 
 cache = RedisStorage2(host=REDIS_HOST, port=int(REDIS_PORT))
 webhook_url = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
+
+DEFAULT = "default"
+
+jobstores = {
+    DEFAULT: RedisJobStore(
+        host=REDIS_HOST, port=REDIS_PORT
+    )
+}
+executors = {DEFAULT: AsyncIOExecutor()}
 
 credentials = service_account.Credentials.from_service_account_file(
     CREDENTIALS_PATH

@@ -155,7 +155,6 @@ async def set_event_confirm(message: Message, state: FSMContext):
             if message.text.lower() == "да":
                 await message.reply("Событие создано")
                 set_scheduler(
-                    message,
                     message.from_user.id,
                     data["event_name"],
                     data["event_date"],
@@ -171,7 +170,7 @@ async def set_event_confirm(message: Message, state: FSMContext):
 
 def date_check(date):
     date_now = datetime.datetime.now()
-    date_now += datetime.timedelta(hours=3)
+    date_now -= datetime.timedelta(hours=3)
     if date.time() == datetime.time(hour=0, minute=0):
         return date.date() >= date_now.date()
     else:
