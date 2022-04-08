@@ -2,9 +2,8 @@ from datetime import datetime
 
 import pandas as pd
 from aiogram.types import Message
-from google.oauth2 import service_account
-
 from data import CREDENTIALS_PATH, PROJECT
+from google.oauth2 import service_account
 
 
 class DBManager:
@@ -32,12 +31,15 @@ class DBManager:
         """
 
         tg_id = int(message.from_user.id)
-        query = f"SELECT telegram_id FROM handy-digit-312214.TG_Bot_Stager.\
-                users WHERE telegram_id = {tg_id} AND is_confirmed = true"
-        if pd.read_gbq(query, project_id=self.project,
-                       credentials=self.credentials).empty:
-            return True
-        return False
+        try:
+            qry = f"SELECT telegram_id FROM handy-digit-312214.TG_Bot_Stager.\
+                    users WHERE telegram_id = {tg_id} AND is_confirmed = true"
+            if pd.read_gbq(qry, project_id=self.project,
+                           credentials=self.credentials).empty:
+                return True
+            return False
+        except Exception as e:
+            print(e.args)
 
     def check_auth(self, message: Message) -> bool:
         """
@@ -51,12 +53,15 @@ class DBManager:
         """
 
         tg_id = int(message.from_user.id)
-        query = f"SELECT telegram_id FROM handy-digit-312214.TG_Bot_Stager.\
-                users WHERE telegram_id = {tg_id} AND is_confirmed = false"
-        if pd.read_gbq(query, project_id=self.project,
-                       credentials=self.credentials).empty:
-            return True
-        return False
+        try:
+            qry = f"SELECT telegram_id FROM handy-digit-312214.TG_Bot_Stager.\
+                    users WHERE telegram_id = {tg_id} AND is_confirmed = false"
+            if pd.read_gbq(qry, project_id=self.project,
+                           credentials=self.credentials).empty:
+                return True
+            return False
+        except Exception as e:
+            print(e.args)
 
     def registration(self, message: Message) -> None:
         """
@@ -69,19 +74,18 @@ class DBManager:
         tg_id = message.from_user.id
         tg_name = message.from_user.username
         email = message.text
-        date = message.date
         df = pd.DataFrame({"telegram_id": [tg_id],
                            "telegram_name": [tg_name],
                            "email": [email],
                            "registration_code": [None],
                            "is_confirmed": [False],
-                           "regiestred_at": [date]
+                           "regiestred_at": [None]
                            })
         try:
             df.to_gbq("handy-digit-312214.TG_Bot_Stager.users",
                       project_id=self.project,
                       credentials=self.credentials,
-                      if_exists="append")
+                      if_exists="append",)
         except Exception as e:
             print(e.args)
 
