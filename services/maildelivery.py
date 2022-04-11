@@ -1,9 +1,7 @@
 import re
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from secrets import choice
 from smtplib import SMTP, SMTPDataError
-from string import ascii_letters, digits
 
 from data.config import FROM_EMAIL, PASSWORD
 
