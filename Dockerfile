@@ -7,4 +7,7 @@ WORKDIR /bot
 COPY requirements.txt .
 RUN pip install -r requirements.txt --no-cache-dir
 
+RUN apt update && apt install tzdata -y
+ENV TZ="Europe/Moscow"
+
 COPY . /bot
