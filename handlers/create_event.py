@@ -10,10 +10,13 @@ from aiogram_calendar import SimpleCalendar, simple_cal_callback
 from services.scheduler import set_scheduler
 from states import CreateEventForm
 from loader import dp
+
 start_kb = ReplyKeyboardMarkup(resize_keyboard=True)
 
 
-@dp.message_handler(commands=["create_event"], state="*")
+@dp.message_handler(
+    commands=["create_event"],
+    state="*")
 async def create_event_start(message: Message) -> None:
     """
     Перехватывает сообщение с командой /create_event
@@ -149,7 +152,14 @@ async def set_event_comment(message: Message, state: FSMContext) -> None:
 
 
 @dp.message_handler(state=CreateEventForm.event_confirm)
-async def set_event_confirm(message: Message, state: FSMContext):
+async def set_event_confirm(message: Message, state: FSMContext) -> None:
+    """
+    Перехватывает комментарий со стейтом event_confirm
+    Проверяет корректность ответа
+    Создаёт запись в set_scheduler в случае положительного ответа
+    :param message: сообщение
+    :param state: стейт
+    """
     if message.text.lower() in {"да", "нет"}:
         async with state.proxy() as data:
             if message.text.lower() == "да":
@@ -168,9 +178,12 @@ async def set_event_confirm(message: Message, state: FSMContext):
         await message.reply("Подтвердить? (да/нет)")
 
 
-def date_check(date):
+def date_check(date: datetime) -> bool:
+    """
+    Функция для проверки времени, даты
+    :param date: дата
+    """
     date_now = datetime.datetime.now()
-    date_now -= datetime.timedelta(hours=3)
     if date.time() == datetime.time(hour=0, minute=0):
         return date.date() >= date_now.date()
     else:
