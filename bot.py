@@ -5,6 +5,8 @@ from aiogram.utils import executor
 
 import data
 import handlers
+import filters
+import middlewares
 from loader import bot, dp
 from services.scheduler import SCHEDULER
 
