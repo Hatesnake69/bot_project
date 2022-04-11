@@ -10,11 +10,13 @@ from aiogram_calendar import SimpleCalendar, simple_cal_callback
 from services.scheduler import set_scheduler
 from states import CreateEventForm
 from loader import dp
+from filters import IsRegistered
 
 start_kb = ReplyKeyboardMarkup(resize_keyboard=True)
 
 
 @dp.message_handler(
+    IsRegistered(),
     commands=["create_event"],
     state="*")
 async def create_event_start(message: Message) -> None:

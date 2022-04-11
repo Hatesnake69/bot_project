@@ -4,9 +4,10 @@ from aiogram.types import Message
 import keyboards as key
 from loader import dp
 from states import FaqStates, update_state
+from filters import IsRegistered
 
 
-@dp.message_handler(commands=['faq'], state='*')
+@dp.message_handler(IsRegistered(), commands=['faq'], state='*')
 async def process_start_command(message: Message, state: FSMContext):
     await update_state(message,
                        FaqStates.INIT_FIRST_STATE,
