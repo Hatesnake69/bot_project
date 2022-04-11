@@ -1,13 +1,25 @@
 from datetime import date, datetime, timedelta
 
+from apscheduler.executors.asyncio import AsyncIOExecutor
+from apscheduler.jobstores.redis import RedisJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from data import executors, jobstores
+from data import REDIS_HOST, REDIS_PORT
+
 from loader import bot
 from services import is_day_off
 from services.graph import (get_dataframe_for_graph, get_image,
                             get_xlabel_for_graph)
 from utils import db
+
+DEFAULT = "default"
+
+jobstores = {
+    DEFAULT: RedisJobStore(
+        host=REDIS_HOST, port=REDIS_PORT
+    )
+}
+executors = {DEFAULT: AsyncIOExecutor()}
 
 SCHEDULER = AsyncIOScheduler(jobstores=jobstores, executors=executors)
 
