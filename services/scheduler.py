@@ -5,7 +5,6 @@ from apscheduler.jobstores.redis import RedisJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from data import REDIS_HOST, REDIS_PORT
-
 from loader import bot
 from services import is_day_off
 from services.graph import (get_dataframe_for_graph, get_image,
@@ -70,8 +69,8 @@ async def send_reminder_to_user(user_id: int, planned_at: datetime):
     :param planned_at: дата события
     """
     reminder_text = db_manager.get_reminder_text(user_id, planned_at)
-
-    await bot.send_message(user_id, text=reminder_text)
+    for _, row in reminder_text.iterrows():
+        await bot.send_message(row[0], text=row['message_text'])
 
 
 def set_scheduler(

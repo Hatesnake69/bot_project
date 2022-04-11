@@ -2,8 +2,9 @@ from datetime import datetime
 
 import pandas as pd
 from aiogram.types import Message
-from data import CREDENTIALS_PATH, PROJECT
 from google.oauth2 import service_account
+
+from data import CREDENTIALS_PATH, PROJECT
 
 
 class DBManager:
@@ -85,7 +86,7 @@ class DBManager:
             df.to_gbq("handy-digit-312214.TG_Bot_Stager.users",
                       project_id=self.project,
                       credentials=self.credentials,
-                      if_exists="append",)
+                      if_exists="append", )
         except Exception as e:
             print(e.args)
 
@@ -167,18 +168,17 @@ class DBManager:
         """
 
         query = (
-            f"SELECT message_text FROM "
+            f"SELECT * FROM "
             f"handy-digit-312214.TG_Bot_Stager.remind_msg WHERE "
             f"planned_at = DATETIME({planned_at.year}, {planned_at.month}, "
             f"{planned_at.day}, {planned_at.hour},{planned_at.minute}, 0) "
-            f"AND telegram_id = {user_id} "
         )
 
         reminder_text = pd.read_gbq(
             query, project_id=PROJECT, credentials=self.credentials
         )
 
-        return reminder_text["message_text"][0]
+        return reminder_text
 
     def get_df_users(self):
         """
