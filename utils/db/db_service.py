@@ -80,7 +80,8 @@ class DBManager:
                            "email": [email],
                            "registration_code": [None],
                            "is_confirmed": [False],
-                           "regiestred_at": [None]
+                           "regiestred_at": [None],
+                           "is_active": [True]
                            })
         try:
             df.to_gbq("handy-digit-312214.TG_Bot_Stager.users",
