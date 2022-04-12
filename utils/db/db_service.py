@@ -219,3 +219,20 @@ class DBManager:
             sql_group_project, project_id=PROJECT, credentials=self.credentials
         )
         return df
+
+    def get_df_for_faq(self, faq_key):
+        """
+        Функция выгружает из БД ответ по ключу FAQ и
+        возвращает в строковом виде
+
+        :param faq_key: ключ записи
+        """
+
+        query = f"SELECT answer FROM TG_Bot_Stager.faq_datas " \
+                f"WHERE key = '{faq_key}'"
+
+        reply_text = pd.read_gbq(
+            query, project_id=PROJECT, credentials=self.credentials
+        )
+
+        return reply_text.values[0][0]
