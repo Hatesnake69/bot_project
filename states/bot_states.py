@@ -4,6 +4,9 @@ from aiogram.types import Message
 
 import keyboards as key
 from data import cache
+from utils import db
+
+db_manager = db.DBManager()
 
 
 class BotStates(StatesGroup):
@@ -31,3 +34,16 @@ async def update_state(message: Message,
     await message.reply("choose",
                         reply_markup=key.KEYBOARDS[keyboard],
                         reply=False)
+
+
+async def get_reply(message: Message,
+                    faq_key: str):
+    """
+    Функция получает ответ на FAQ и отправляет пользователю
+    """
+
+    await cache.set_data(chat=message.chat,
+                         user=message.from_user.username,
+                         data=message.text)
+
+    await message.reply(db_manager.get_df_for_faq(faq_key))
