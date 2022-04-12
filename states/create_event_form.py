@@ -10,4 +10,5 @@ class CreateEventForm(StatesGroup):
     event_date = State()
     event_time = State()
     event_comment = State()
+    event_status = State()
     event_confirm = State()

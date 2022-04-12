@@ -10,7 +10,9 @@ from aiogram_calendar import SimpleCalendar, simple_cal_callback
 from services.scheduler import set_scheduler
 from states import CreateEventForm
 from loader import dp
+from data import CHAT_ID
 from filters import IsRegistered
+
 
 start_kb = ReplyKeyboardMarkup(resize_keyboard=True)
 
@@ -129,28 +131,51 @@ async def set_event_comment(message: Message, state: FSMContext) -> None:
     """
     Перехватывает комментарий со стейтом event_comment
     Записывает в state.proxy() комментарий по ключу "event_comment"
-    Спрашивает у пользователя верна ли введенная информация
-    Устанавливает стейт event_confirm
-    Просит подтверждения
+    Спрашивает у пользователя будет ли это событие персональным
     :param message: сообщение
     :param state: стейт
     """
     async with state.proxy() as data:
         data["event_comment"] = message.text
 
-    await message.answer(
-        text(
-            text(message.chat.id),
-            text(data["event_name"]),
-            text(data["event_date"]),
-            text(data["event_time"]),
-            text(data["event_comment"]),
-            sep="\n",
-        ),
-    )
     await CreateEventForm.next()
+    await message.reply("Сделать событие для всех? (да/нет)")
 
-    await message.reply("Подтвердить? (да/нет)")
+
+@dp.message_handler(state=CreateEventForm.event_status)
+async def set_event_status(message: Message, state: FSMContext) -> None:
+
+    """
+    Перехватывает комментарий со стейтом event_status
+    Записывает в state.proxy() комментарий по ключу "event_status"
+    Спрашивает у пользователя подтверждение на создание события
+    :param message: сообщение
+    :param state: стейт
+    """
+
+    if message.text.lower() in {"да", "нет"}:
+        if message.text.lower() == "да":
+            async with state.proxy() as data:
+                data["event_status"] = "Событие для всех"
+        else:
+            async with state.proxy() as data:
+                data["event_status"] = "Персональное событие"
+
+        await message.answer(
+            text(
+                text(data["event_name"]),
+                text(data["event_date"]),
+                text(data["event_time"]),
+                text(data["event_comment"]),
+                text(data["event_status"]),
+                sep="\n",
+            ),
+        )
+
+        await CreateEventForm.next()
+        await message.reply("Подтвердить? (да/нет)")
+    else:
+        await message.reply("Сделать событие для всех? (да/нет)")
 
 
 @dp.message_handler(state=CreateEventForm.event_confirm)
@@ -166,8 +191,12 @@ async def set_event_confirm(message: Message, state: FSMContext) -> None:
         async with state.proxy() as data:
             if message.text.lower() == "да":
                 await message.reply("Событие создано")
+                if data["event_status"] == "Персональное событие":
+                    user_id = message.from_user.id
+                else:
+                    user_id = int(CHAT_ID)
                 set_scheduler(
-                    message.from_user.id,
+                    user_id,
                     data["event_name"],
                     data["event_date"],
                     data["event_time"],

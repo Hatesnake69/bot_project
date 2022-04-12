@@ -96,7 +96,7 @@ def set_scheduler(
     event_date = datetime.strptime(
         f"{event_date} {event_time}", "%d/%m/%Y %H:%M"
     )
-    reminder_time = event_date - timedelta(minutes=30)
+    reminder_time = event_date - timedelta(minutes=1)
     created_at = datetime.now()
 
     if db_manager.send_task_to_bq(
