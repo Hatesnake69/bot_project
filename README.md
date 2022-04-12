@@ -48,3 +48,8 @@ docker-compose up --build -d
 ```bash
 docker-compose stop
 ```
+### Настройка commit-hook
+Установите pre-commit вне виртуального окружения:
+```bash
+pip install pre-commit
+```
