@@ -9,10 +9,10 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import Message
 
 from data import cache
-from services import sending_message
-from states import RegStates
 from loader import dp
+from services import sending_message
 from services.scheduler import db_manager as manager
+from states import RegStates
 
 
 def isValid(email):

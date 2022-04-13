@@ -1,4 +1,5 @@
 from aiogram import Dispatcher
+
 from .is_reg import IsRegistered
 
 

@@ -23,6 +23,7 @@ async def process_help_command(message: Message, state: FSMContext):
                          "/reg - регистрация в боте;\n"
                          "/search - поиск зарегистрированных пользователей;\n"
                          "/create_event - создание запланированной встречи;\n"
+                         "/details_job - информация о времени работы;\n"
                          "/faq - часто задаваемые вопросы.\n"
                          "/cancel - отмена текущей команды")
     await state.finish()

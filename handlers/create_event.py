@@ -1,18 +1,16 @@
-import re
-
 import datetime
+import re
 
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardMarkup
 from aiogram.utils.markdown import text
 from aiogram_calendar import SimpleCalendar, simple_cal_callback
 
-from services.scheduler import set_scheduler
-from states import CreateEventForm
-from loader import dp
 from data import CHAT_ID
 from filters import IsRegistered
-
+from loader import dp
+from services.scheduler import set_scheduler
+from states import CreateEventForm
 
 start_kb = ReplyKeyboardMarkup(resize_keyboard=True)
 

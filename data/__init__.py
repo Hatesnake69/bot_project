@@ -1,3 +1,3 @@
-from .config import cache, credentials, PROJECT, PASSWORD, CREDENTIALS_PATH, WEBHOOK_PATH, webhook_url, \
-    BOT_TOKEN, FROM_EMAIL, TIMEZONE, REDIS_HOST, REDIS_PORT, CHAT_ID
-
+from .config import (BOT_TOKEN, CHAT_ID, CREDENTIALS_PATH, FROM_EMAIL,
+                     PASSWORD, PROJECT, REDIS_HOST, REDIS_PORT, TIMEZONE,
+                     WEBHOOK_PATH, cache, credentials, webhook_url)
