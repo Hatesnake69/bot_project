@@ -1,4 +1,5 @@
 import functools
+
 import pytest
 from aiogram.dispatcher.handler import Handler, _check_spec, _get_spec
 

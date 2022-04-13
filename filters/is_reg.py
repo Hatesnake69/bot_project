@@ -1,9 +1,9 @@
 
-from aiogram.types import Message
 from aiogram.dispatcher.filters import BoundFilter
+from aiogram.types import Message
 
-from services.scheduler import db_manager
 from data import cache
+from services.scheduler import db_manager
 
 
 class IsRegistered(BoundFilter):

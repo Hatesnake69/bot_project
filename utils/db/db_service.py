@@ -220,6 +220,25 @@ class DBManager:
         )
         return df
 
+    def get_salary_periods_user(self, user_id: int):
+        """
+        Функция выгружает из БД зарплатные периоды
+
+         :param user_id: id пользователя
+         :type user_id: int
+
+        """
+
+        query = (
+                f"SELECT DISTINCT salaryPeriod, notApprovedSalaryPeriod"
+                f" FROM TG_Bot_Stager.salaryDetailsByTrackdate "
+                f"WHERE telegram_id ={user_id}"
+        )
+        df = pd.read_gbq(
+            query, project_id=PROJECT, credentials=self.credentials
+        )
+        return df
+
     def get_df_for_faq(self, faq_key):
         """
         Функция выгружает из БД ответ по ключу FAQ и
