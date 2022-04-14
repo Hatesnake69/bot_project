@@ -3,8 +3,17 @@ from datetime import datetime
 import pandas as pd
 from aiogram.types import Message
 from google.oauth2 import service_account
+from google.cloud import bigquery
+import logging
 
 from data import CREDENTIALS_PATH, PROJECT
+
+
+logging.basicConfig(
+    filename="logging/bot.log",
+    level=logging.ERROR,
+    format="%(asctime)s - %(name)s- %(levelname)s : %(message)s",
+)
 
 
 class DBManager:
@@ -19,6 +28,7 @@ class DBManager:
     credentials = service_account.Credentials. \
         from_service_account_file(CREDENTIALS_PATH)
     project = PROJECT
+    bqclient = bigquery.Client(credentials=credentials)
 
     def check_user(self, message: Message) -> bool:
         """
@@ -40,7 +50,8 @@ class DBManager:
                 return True
             return False
         except Exception as e:
-            print(e.args)
+            message.answer('Во время запроса к базе данных произошла ошибка')
+            logging.error(e)
 
     def check_auth(self, message: Message) -> bool:
         """
@@ -62,7 +73,8 @@ class DBManager:
                 return True
             return False
         except Exception as e:
-            print(e.args)
+            message.answer('Во время запроса к базе данных произошла ошибка')
+            logging.error(e)
 
     def registration(self, message: Message) -> None:
         """
@@ -89,7 +101,8 @@ class DBManager:
                       credentials=self.credentials,
                       if_exists="append", )
         except Exception as e:
-            print(e.args)
+            message.answer('Во время запроса к базе данных произошла ошибка')
+            logging.error(e)
 
     def authentication(self, message: Message) -> None:
         """
@@ -117,7 +130,69 @@ class DBManager:
                       credentials=self.credentials,
                       if_exists="replace")
         except Exception as e:
-            print(e.args)
+            message.answer('Во время запроса к базе данных произошла ошибка')
+            logging.error(e)
+
+    def send_to_blacklist(self, message: Message) -> None:
+        """
+        Отправляет в bigquery значение поля "is_active" True для юзера
+        добавляет в блэклист простыми словами
+        :param message: сообщение пользователя
+        :type message: types.Message
+        """
+        tg_id: int = message.from_user.id
+        query: str = (
+            f"UPDATE handy-digit-312214.TG_Bot_Stager.users"
+            f"SET is_active = false"
+            f"WHERE telegram_id = {tg_id}"
+        )
+        try:
+            self.bqclient.query(query=query)
+        except Exception as e:
+            message.answer('Во время запроса к базе данных произошла ошибка')
+            logging.error(e)
+
+    def remove_from_blacklist(self, message: Message) -> None:
+        """
+        Отправляет в bigquery значение поля "is_active" False для юзера
+        убирает из блэклиста простыми словами
+
+        :param message: сообщение пользователя
+        :type message: types.Message
+        """
+        tg_id: int = message.from_user.id
+        query: str = (
+            f"UPDATE handy-digit-312214.TG_Bot_Stager.users"
+            f"SET is_active = true"
+            f"WHERE telegram_id = {tg_id}"
+        )
+        try:
+            self.bqclient.query(query=query)
+        except Exception as e:
+            message.answer('Во время запроса к базе данных произошла ошибка')
+            logging.error(e)
+
+    def check_black_list(self, message: Message) -> bool:
+        """
+        Возвращает True, если пользователь в блэклисте
+
+        :param message: сообщение пользователя
+        :type message: Message
+
+        :rtype: bool
+        """
+
+        tg_id: int = message.from_user.id
+        query: str = (
+            f"SELECT telegram_id FROM handy-digit-312214.TG_Bot_Stager."
+            f"users WHERE telegram_id = {tg_id} AND is_active = false"
+        )
+        try:
+            query_job = self.bqclient.query(query=query)
+            return not(query_job.result().total_rows == 0)
+        except Exception as e:
+            message.answer('Во время запроса к базе данных произошла ошибка')
+            logging.error(e)
 
     def send_task_to_bq(self,
                         user_id:
@@ -156,7 +231,7 @@ class DBManager:
 
             return True
         except Exception as e:
-            print(e.args)
+            logging.error(e)
             return False
 
     def get_reminder_text(self, user_id: int, planned_at: datetime):
@@ -194,7 +269,7 @@ class DBManager:
         )
         return df_users
 
-    def get_df_for_graph(self, user_id, salary_period):
+    def get_df_for_graph(self, user_id: int, salary_period: datetime.date):
 
         """
         Формирует Dataframe через запрос к БД
@@ -202,8 +277,8 @@ class DBManager:
          :param user_id: id пользователя
          :type user_id: int
 
-         :param date: дата составления графика
-         :type date: datetime.date
+         :param salary_period: дата составления графика
+         :type salary_period: datetime.date
 
         """
         sql_group_project = (
