@@ -41,8 +41,9 @@ async def tracker(message: Message, key: str) -> None:
     try:
         if data[key] >= limit:
             data['black_list'] = True
+            manager.send_to_blacklist(message=message)
         else:
-            data[key] = data[key] + 1
+            data[key] += 1
     except KeyError:
         data[key] = 2
     await cache.update_data(
@@ -104,4 +105,4 @@ async def input_key_message(message: Message, state: FSMContext):
                              "Добро пожаловать в YlabBot")
         await state.finish()
     else:
-        await message.answer("Ошибка")
+        await message.answer("Неверный пароль. Пожалуйста, повторите попытку.")
