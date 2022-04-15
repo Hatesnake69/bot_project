@@ -9,5 +9,6 @@ repos:
       - id: isort
         name: isort
         entry: isort
+        exclude: (__init__.py)
         language: system
         types: [ python ]

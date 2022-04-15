@@ -55,15 +55,19 @@ async def tracker(message: Message, key: str) -> None:
 
 @dp.message_handler(commands=["reg"], state="*")
 async def process_reg_command(message: Message):
-    if manager.check_user(message=message):
+    check_user = manager.check_user(message=message)
+    if check_user == 'Not Registered':
         await message.answer("Здравствуйте, напишите адрес свой электронной "
                              "почты в домене @ylab.io для прохождения "
                              "дальнейшей регистрации!")
         await RegStates.EMAIL_MESSAGE.set()
-    else:
+    elif check_user == 'Registered':
         await message.answer("Добро пожаловать в чат Бот компании Ylab. Вы "
-                             "уже зарегестрированы. Нажмите /help и выберете "
+                             "уже зарегестрированы. Нажмите /help и выберите "
                              "команду.")
+    else:
+        await message.answer("Произошла непредвиденная ошибка, свяжитесь"
+                             " с администратором")
 
 
 @dp.message_handler(state=RegStates.EMAIL_MESSAGE)
@@ -76,18 +80,26 @@ async def send_email_message(message: Message):
         data={'secret_key': secret_key}
     )
     if isValid(message.text):
-        if manager.check_auth(message):
-            manager.registration(message)
-        sending_message(message.text, secret_key)
-        await message.answer("На вашу почту отправлен ключ "
-                             "подтверждения введите его: ")
-        await cache.update_data(
-            chat=message.chat.id,
-            user=message.from_user.id,
-            data={'email': message.text}
-        )
+        check_auth: str = manager.check_auth(message)
+        errors = False
+        if check_auth == 'Not auth':
+            errors = manager.registration(message)
+        elif check_auth == 'Error':
+            errors = True
+        if errors:
+            await message.answer("Произошла непредвиденная ошибка, свяжитесь"
+                                 " с администратором")
+        else:
+            sending_message(message.text, secret_key)
+            await message.answer("На вашу почту отправлен ключ "
+                                 "подтверждения введите его: ")
+            await cache.update_data(
+                chat=message.chat.id,
+                user=message.from_user.id,
+                data={'email': message.text}
+            )
 
-        await RegStates.KEY_MESSAGE.set()
+            await RegStates.KEY_MESSAGE.set()
     else:
         await message.answer("Проверьте правильность введенного адреса")
 
@@ -100,9 +112,12 @@ async def input_key_message(message: Message, state: FSMContext):
         user=message.from_user.id
     )
     if secret_key['secret_key'] == message.text:
-        manager.authentication(message)
-        await message.answer("Вы ввели верный ключ! "
-                             "Добро пожаловать в YlabBot")
-        await state.finish()
+        if manager.authentication(message):
+            await message.answer("Вы ввели верный ключ! "
+                                 "Добро пожаловать в YlabBot")
+            await state.finish()
+        else:
+            await message.answer("Произошла непредвиденная ошибка, свяжитесь"
+                                 " с администратором")
     else:
         await message.answer("Неверный пароль. Пожалуйста, повторите попытку.")
