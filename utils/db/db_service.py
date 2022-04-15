@@ -1,13 +1,12 @@
+import logging
 from datetime import datetime
 
 import pandas as pd
 from aiogram.types import Message
-from google.oauth2 import service_account
 from google.cloud import bigquery
-import logging
+from google.oauth2 import service_account
 
 from data import CREDENTIALS_PATH, PROJECT
-
 
 logging.basicConfig(
     filename="logging/bot.log",
@@ -23,6 +22,7 @@ class DBManager:
     Args:
     credentials (service_account.Credentials): файл доступа
     project (str): название проекта
+    bqclient (bigquery.client): клиент
     """
 
     credentials = service_account.Credentials. \
@@ -30,108 +30,107 @@ class DBManager:
     project = PROJECT
     bqclient = bigquery.Client(credentials=credentials)
 
-    def check_user(self, message: Message) -> bool:
+    def check_user(self, message: Message) -> str:
         """
-        Возвращает True, если пользователь не зарегистрирован
-        и можно работать дальше
+        Возвращает зарегистрирован ли пользователь или Error в случае ошибки
 
         :param message: сообщение пользователя
         :type message: Message
 
-        :rtype: bool
+        :rtype: str
         """
 
-        tg_id = int(message.from_user.id)
+        tg_id = message.from_user.id
         try:
-            qry = f"SELECT telegram_id FROM handy-digit-312214.TG_Bot_Stager.\
-                    users WHERE telegram_id = {tg_id} AND is_confirmed = true"
+            qry = (f"SELECT telegram_id FROM handy-digit-312214.TG_Bot_Stager."
+                   f"users WHERE telegram_id = {tg_id} AND"
+                   f" is_confirmed = true")
             if pd.read_gbq(qry, project_id=self.project,
                            credentials=self.credentials).empty:
-                return True
-            return False
+                return 'Not Registered'
+            return 'Registered'
         except Exception as e:
-            message.answer('Во время запроса к базе данных произошла ошибка')
             logging.error(e)
+            return 'Error'
 
-    def check_auth(self, message: Message) -> bool:
+    def check_auth(self, message: Message) -> str:
         """
-        Возвращает True, если пользователь не аутентифицирован
-        и можно работать дальше
+        Возвращает авторизован ли пользователь или Error в случае ошибки
 
         :param message: сообщение пользователя
         :type message: Message
 
-        :rtype: bool
+        :rtype: str
         """
 
         tg_id = int(message.from_user.id)
         try:
-            qry = f"SELECT telegram_id FROM handy-digit-312214.TG_Bot_Stager.\
-                    users WHERE telegram_id = {tg_id} AND is_confirmed = false"
+            qry = (f"SELECT telegram_id FROM handy-digit-312214.TG_Bot_Stager."
+                   f"users WHERE telegram_id = {tg_id} AND"
+                   f" is_confirmed = false")
             if pd.read_gbq(qry, project_id=self.project,
                            credentials=self.credentials).empty:
-                return True
-            return False
+                return 'Not auth'
+            return 'Auth'
         except Exception as e:
-            message.answer('Во время запроса к базе данных произошла ошибка')
             logging.error(e)
+            return 'Error'
 
-    def registration(self, message: Message) -> None:
+    def registration(self, message: Message) -> bool:
         """
-        Записывает пользователя
+        Записывает пользователя, если нет исключений вернет False
 
         :param message: сообщение пользователя из которого ожидается email
         :type message: types.Message
+        :rtype: bool
         """
 
         tg_id = message.from_user.id
         tg_name = message.from_user.username
         email = message.text
+        date = str(datetime.now().today())
         df = pd.DataFrame({"telegram_id": [tg_id],
-                           "telegram_name": [tg_name],
+                           "telegram_name": [f'@{tg_name}'],
                            "email": [email],
                            "registration_code": [None],
                            "is_confirmed": [False],
-                           "regiestred_at": [None],
-                           "is_active": [True]
+                           "regiestred_at": [date],
+                           "is_active": [True],
+                           "role": [None]
                            })
         try:
             df.to_gbq("handy-digit-312214.TG_Bot_Stager.users",
                       project_id=self.project,
                       credentials=self.credentials,
                       if_exists="append", )
+            return False
         except Exception as e:
-            message.answer('Во время запроса к базе данных произошла ошибка')
             logging.error(e)
+            return True
 
-    def authentication(self, message: Message) -> None:
+    def authentication(self, message: Message) -> bool:
         """
         Аутентифицирует пользователя
 
         :param message: сообщение пользователя из которого ожидается
         secret key
         :type message: types.Message
+        :rtype: bool
         """
 
-        tg_id = message.from_user.id
-        secret_key = message.text
-        query = "SELECT * FROM handy-digit-312214.TG_Bot_Stager.users"
-        df = pd.read_gbq(query, project_id=self.project,
-                         credentials=self.credentials)
-        df2 = pd.DataFrame({'telegram_id': tg_id, 'is_confirmed': True,
-                            'registration_code': secret_key}, index=[0])
-        df.loc[df.telegram_id == tg_id, 'is_confirmed'] = \
-            df2[df2.telegram_id == tg_id].loc[0]['is_confirmed']
-        df.loc[df.telegram_id == tg_id, 'registration_code'] = \
-            df2[df2.telegram_id == tg_id].loc[0]['registration_code']
+        tg_id: int = message.from_user.id
+        secret_key: str = message.text
+        query = (f"UPDATE handy-digit-312214.TG_Bot_Stager.users"
+                 f" SET is_confirmed = true ,"
+                 f" registration_code = '{secret_key}'"
+                 f" WHERE telegram_id = {tg_id}")
         try:
-            df.to_gbq("handy-digit-312214.TG_Bot_Stager.users",
-                      project_id=self.project,
-                      credentials=self.credentials,
-                      if_exists="replace")
+            query_job = self.bqclient.query(query)
+            query_job.result()
+            return True
         except Exception as e:
-            message.answer('Во время запроса к базе данных произошла ошибка')
             logging.error(e)
+            return False
 
     def send_to_blacklist(self, message: Message) -> None:
         """
