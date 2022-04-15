@@ -5,11 +5,10 @@ from apscheduler.jobstores.redis import RedisJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from data import REDIS_HOST, REDIS_PORT
-from loader import bot
+from loader import bot, db_manager
 from services import is_day_off
 from services.graph import (get_dataframe_for_graph, get_image,
                             get_xlabel_for_graph)
-from utils import db
 
 DEFAULT = "default"
 
@@ -23,8 +22,6 @@ executors = {DEFAULT: AsyncIOExecutor()}
 SCHEDULER = AsyncIOScheduler(jobstores=jobstores, executors=executors)
 
 TODAY = date.today()
-
-db_manager = db.DBManager()
 
 
 async def send_graph_to_all():

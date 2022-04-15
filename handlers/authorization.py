@@ -9,9 +9,9 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import Message
 
 from data import cache
+from loader import db_manager as manager
 from loader import dp
 from services import sending_message
-from services.scheduler import db_manager as manager
 from states import RegStates
 
 

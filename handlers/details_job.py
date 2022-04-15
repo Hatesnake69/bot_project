@@ -1,11 +1,8 @@
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardMarkup
 
-from loader import dp
+from loader import db_manager, dp
 from services.graph import get_image, get_xlabel_for_graph
-from utils import db
-
-db_manager = db.DBManager()
 
 
 @dp.message_handler(Text(equals=['/details_job']), commands=['details_job'])
