@@ -20,13 +20,26 @@ class IsRegistered(BoundFilter):
                 user=user_id,
                 chat=chat_id
             )
-            is_reg = data['reg_status']
+            is_reg_flag = data['reg_status']
+            return is_reg_flag
 
         except KeyError:
-            is_reg = not db_manager.check_user(message=message)
-            await cache.update_data(
-                user=user_id,
-                chat=chat_id,
-                data={'reg_status': is_reg}
-            )
-        return is_reg
+            is_reg = db_manager.check_user(message=message)
+            if is_reg == 'Registered':
+                await cache.update_data(
+                    user=user_id,
+                    chat=chat_id,
+                    data={'reg_status': True}
+                )
+                return True
+            elif is_reg == 'Not Registered':
+                await cache.update_data(
+                    user=user_id,
+                    chat=chat_id,
+                    data={'reg_status': False}
+                )
+                return False
+            else:
+                await message.answer("Произошла непредвиденная ошибка, "
+                                     "свяжитесь с администратором")
+                return False
