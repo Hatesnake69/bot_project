@@ -3,7 +3,7 @@ from numpy import arange
 from pandas import DataFrame, date_range, to_datetime
 from seaborn import histplot
 
-from utils import db
+from loader import db_manager
 
 
 def get_salary_period(today):
@@ -56,7 +56,6 @@ def get_dataframe_for_graph(user_id, date):
      :type date: datetime.date
 
     """
-    db_manager = db.DBManager()
     salary_period = get_salary_period(date)
 
     return db_manager.get_df_for_graph(user_id, salary_period)

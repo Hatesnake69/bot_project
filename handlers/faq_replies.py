@@ -1,125 +1,165 @@
-from aiogram.types import Message
+
+from aiogram.types import CallbackQuery
 
 import keyboards as key
-from loader import dp
-from states import FaqStates, get_reply
+from data import cache
+from loader import bot, db_manager, dp
 
 
-@dp.message_handler(text=[key.FIN_Q1_STR], state=FaqStates.FIN_FIRST_STATE)
-async def answer_fin_1(message: Message):
+async def get_reply(call: CallbackQuery,
+                    faq_key: str):
     """
-    Отправляет ответ в чат пользователю по записи 'FIN-1'
-    :param message: сообщение
+    Получает ответ на FAQ и отправляет пользователю
+    :param call: объект CallbackQuery
+    :param faq_key: ключ записи
     """
 
-    await get_reply(message, 'FIN-1')
+    await cache.set_data(chat=call.message.chat,
+                         user=call.message.from_user.username,
+                         data=call.message.text)
+
+    await call.message.answer(db_manager.get_df_for_faq(faq_key))
 
 
-@dp.message_handler(text=[key.FIN_Q2_STR], state=FaqStates.FIN_FIRST_STATE)
-async def answer_fin_2(message: Message):
+async def send_message(call, text_button):
+    """
+    Удаляет прежнее сообщение и отправляет вопрос пользователю
+    :param call: объект CallbackQuery
+    :param text_button: текст вопроса
+    """
+
+    await bot.delete_message(chat_id=call.from_user.id,
+                             message_id=call.message.message_id)
+    await call.message.answer(text=text_button)
+
+
+@dp.callback_query_handler(text=key.FaqKeyboard.FIN_Q2_STR.value)
+async def answer_fin_2(call: CallbackQuery):
     """
     Отправляет ответ в чат пользователю по записи 'FIN-2'
-    :param message: сообщение
+    :param call: объект CallbackQuery
     """
 
-    await get_reply(message, 'FIN-2')
+    await send_message(call, key.FaqKeyboard.FIN_Q2_STR.value)
+    await get_reply(call, 'FIN-2')
 
 
-@dp.message_handler(text=[key.FIN_Q3_STR], state=FaqStates.FIN_SECOND_STATE)
-async def answer_fin_3(message: Message):
+@dp.callback_query_handler(text=key.FaqKeyboard.FIN_Q1_STR.value)
+async def answer_fin_1(call: CallbackQuery):
+    """
+    Отправляет ответ в чат пользователю по записи 'FIN-2'
+    :param call: объект CallbackQuery
+    """
+
+    await send_message(call, key.FaqKeyboard.FIN_Q1_STR.value)
+    await get_reply(call, 'FIN-1')
+
+
+@dp.callback_query_handler(text=key.FaqKeyboard.FIN_Q3_STR.value)
+async def answer_fin_3(call: CallbackQuery):
     """
     Отправляет ответ в чат пользователю по записи 'FIN-3'
-    :param message: сообщение
+    :param call: объект CallbackQuery
     """
 
-    await get_reply(message, 'FIN-3')
+    await send_message(call, key.FaqKeyboard.FIN_Q3_STR.value)
+    await get_reply(call, 'FIN-3')
 
 
-@dp.message_handler(text=[key.FIN_Q4_STR], state=FaqStates.FIN_SECOND_STATE)
-async def answer_fin_4(message: Message):
+@dp.callback_query_handler(text=key.FaqKeyboard.FIN_Q4_STR.value)
+async def answer_fin_4(call: CallbackQuery):
     """
     Отправляет ответ в чат пользователю по записи 'FIN-4'
-    :param message: сообщение
+    :param call: объект CallbackQuery
     """
 
-    await get_reply(message, 'FIN-4')
+    await send_message(call, key.FaqKeyboard.FIN_Q4_STR.value)
+    await get_reply(call, 'FIN-4')
 
 
-@dp.message_handler(text=[key.FIN_Q5_STR], state=FaqStates.FIN_THIRD_STATE)
-async def answer_fin_5(message: Message):
+@dp.callback_query_handler(text=key.FaqKeyboard.FIN_Q5_STR.value)
+async def answer_fin_5(call: CallbackQuery):
     """
     Отправляет ответ в чат пользователю по записи 'FIN-5'
-    :param message: сообщение
+    :param call: объект CallbackQuery
     """
 
-    await get_reply(message, 'FIN-5')
+    await send_message(call, key.FaqKeyboard.FIN_Q5_STR.value)
+    await get_reply(call, 'FIN-5')
 
 
-@dp.message_handler(text=[key.TECH_Q1_STR], state=FaqStates.TECH_FIRST_STATE)
-async def answer_tech_1(message: Message):
+@dp.callback_query_handler(text=key.FaqKeyboard.TECH_Q1_STR.value)
+async def answer_tech_1(call: CallbackQuery):
     """
     Отправляет ответ в чат пользователю по записи 'TDP-1'
-    :param message: сообщение
+    :param call: объект CallbackQuery
     """
 
-    await get_reply(message, 'TDP-1')
+    await send_message(call, key.FaqKeyboard.TECH_Q1_STR.value)
+    await get_reply(call, 'TDP-1')
 
 
-@dp.message_handler(text=[key.TECH_Q2_STR], state=FaqStates.TECH_FIRST_STATE)
-async def answer_tech_2(message: Message):
+@dp.callback_query_handler(text=key.FaqKeyboard.TECH_Q2_STR.value)
+async def answer_tech_2(call: CallbackQuery):
     """
     Отправляет ответ в чат пользователю по записи 'TDP-2'
-    :param message: сообщение
+    :param call: объект CallbackQuery
     """
 
-    await get_reply(message, 'TDP-2')
+    await send_message(call, key.FaqKeyboard.TECH_Q2_STR.value)
+    await get_reply(call, 'TDP-2')
 
 
-@dp.message_handler(text=[key.TECH_Q3_STR], state=FaqStates.TECH_SECOND_STATE)
-async def answer_tech_3(message: Message):
+@dp.callback_query_handler(text=key.FaqKeyboard.TECH_Q3_STR.value)
+async def answer_tech_3(call: CallbackQuery):
     """
     Отправляет ответ в чат пользователю по записи 'TDP-3'
-    :param message: сообщение
+    :param call: объект CallbackQuery
     """
 
-    await get_reply(message, 'TDP-3')
+    await send_message(call, key.FaqKeyboard.TECH_Q3_STR.value)
+    await get_reply(call, 'TDP-3')
 
 
-@dp.message_handler(text=[key.ACC_Q1_STR], state=FaqStates.ACC_STATE)
-async def answer_acc_1(message: Message):
+@dp.callback_query_handler(text=key.FaqKeyboard.ACC_Q1_STR.value)
+async def answer_acc_1(call: CallbackQuery):
     """
     Отправляет ответ в чат пользователю по записи 'ACC-1'
-    :param message: сообщение
+    :param call: объект CallbackQuery
     """
 
-    await get_reply(message, 'ACC-1')
+    await send_message(call, key.FaqKeyboard.ACC_Q1_STR.value)
+    await get_reply(call, 'ACC-1')
 
 
-@dp.message_handler(text=[key.ACC_Q2_STR], state=FaqStates.ACC_STATE)
-async def answer_acc_2(message: Message):
+@dp.callback_query_handler(text=key.FaqKeyboard.ACC_Q2_STR.value)
+async def answer_acc_2(call: CallbackQuery):
     """
     Отправляет ответ в чат пользователю по записи 'ACC-2'
-    :param message: сообщение
+    :param call: объект CallbackQuery
     """
 
-    await get_reply(message, 'ACC-2')
+    await send_message(call, key.FaqKeyboard.ACC_Q2_STR.value)
+    await get_reply(call, 'ACC-2')
 
 
-@dp.message_handler(text=[key.ORG_Q1_STR], state=FaqStates.ORG_STATE)
-async def answer_org_1(message: Message):
+@dp.callback_query_handler(text=key.FaqKeyboard.ORG_Q1_STR.value)
+async def answer_org_1(call: CallbackQuery):
     """
     Отправляет ответ в чат пользователю по записи 'ORG-1'
-    :param message: сообщение
+    :param call: объект CallbackQuery
     """
 
-    await get_reply(message, 'ORG-1')
+    await send_message(call, key.FaqKeyboard.ORG_Q1_STR.value)
+    await get_reply(call, 'ORG-1')
 
 
-@dp.message_handler(text=[key.OTH_Q1_STR], state=FaqStates.OTH_STATE)
-async def answer_oth_1(message: Message):
+@dp.callback_query_handler(text=key.FaqKeyboard.OTH_Q1_STR.value)
+async def answer_oth_1(call: CallbackQuery):
     """
     Отправляет ответ в чат пользователю по записи 'ANO-1'
-    :param message: сообщение
+    :param call: объект CallbackQuery
     """
 
-    await get_reply(message, 'ANO-1')
+    await send_message(call, key.FaqKeyboard.OTH_Q1_STR.value)
+    await get_reply(call, 'ANO-1')

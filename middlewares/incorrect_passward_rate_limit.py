@@ -3,7 +3,7 @@ from aiogram.dispatcher.handler import CancelHandler
 from aiogram.dispatcher.middlewares import BaseMiddleware
 
 from data import cache
-from services.scheduler import db_manager as manager
+from loader import db_manager as manager
 
 
 class ThrottlingMiddleware(BaseMiddleware):

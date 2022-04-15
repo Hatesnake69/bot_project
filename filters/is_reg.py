@@ -3,7 +3,7 @@ from aiogram.dispatcher.filters import BoundFilter
 from aiogram.types import Message
 
 from data import cache
-from services.scheduler import db_manager
+from loader import db_manager
 
 
 class IsRegistered(BoundFilter):
