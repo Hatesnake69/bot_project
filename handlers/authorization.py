@@ -6,7 +6,6 @@ import secrets
 
 from aiogram.dispatcher import FSMContext
 from aiogram.types import Message
-from re import compile, fullmatch
 from data import cache
 from handlers.search import is_data_valid
 from loader import db_manager as manager

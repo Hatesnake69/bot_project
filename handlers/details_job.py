@@ -1,11 +1,14 @@
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardMarkup
 
+from filters import IsRegistered
 from loader import db_manager, dp
 from services.graph import get_image, get_xlabel_for_graph
+from states import DetailsJobForm
 
 
-@dp.message_handler(Text(equals=['/details_job']), commands=['details_job'])
+@dp.message_handler(IsRegistered(), Text(equals=['/details_job']),
+                    commands=['details_job'])
 async def get_menu_salary_period(message: Message) -> None:
     """
        Создает запрос в БД об имеющихся ЗП
@@ -28,10 +31,11 @@ async def get_menu_salary_period(message: Message) -> None:
     else:
         for period in df.value:
             kb_period.row(period)
+        await DetailsJobForm.choose_kb.set()
         await message.answer("Выберите период: ", reply_markup=kb_period)
 
 
-@dp.message_handler(content_types=['text'])
+@dp.message_handler(state=DetailsJobForm.choose_kb)
 async def send_graph(message: Message) -> None:
     """
        Формирует график по ЗП и отправляет его
