@@ -25,6 +25,7 @@ PROJECT: str = getenv("PROJECT")  # BigQuery
 TIMEZONE: str = getenv("TIMEZONE")
 CHAT_ID: int = getenv("CHAT_ID")
 
+
 cache = RedisStorage2(host=REDIS_HOST, port=int(REDIS_PORT))
 webhook_url = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
 

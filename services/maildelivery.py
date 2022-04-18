@@ -2,14 +2,22 @@ import re
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from smtplib import SMTP, SMTPDataError
-
 from data.config import FROM_EMAIL, PASSWORD
 
 
-def sending_message(to_email, secret_key):
+def sending_message(to_email, secret_key) -> str:
     """
-    Функции отправляет письмо на почту пользователя,
-    которую он ввел в чат боте.
+    Функция отправляет письмо на почту пользователю,
+    которую он ввел в чат боте. В случае ошибки возвращает
+    строк "Шаблон не найден"
+
+    :param to_email: электронная почта
+    :type to_email: str
+
+    :param secret_key: секретный ключ
+    :type secret_key: str
+
+    :rtype: str
     """
     try:
 

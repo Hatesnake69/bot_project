@@ -2,34 +2,22 @@
 Модуль содержит обработчики, осуществляющие регистрацию новых
 пользователей по электронной почте, посредством команды /reg
 """
-import re
 import secrets
 
 from aiogram.dispatcher import FSMContext
 from aiogram.types import Message
-
+from re import compile, fullmatch
 from data import cache
+from handlers.search import is_data_valid
 from loader import db_manager as manager
 from loader import dp
 from services import sending_message
 from states import RegStates
 
 
-def isValid(email):
-    """
-    Функция проверяет введенную пользователем электронную почту
-    на соответствие за счет Регулярного Выражения
-    """
-    regex = re.compile(r"([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@ylab.io")
-    if re.fullmatch(regex, email):
-        return True
-    else:
-        return False
-
-
 async def tracker(message: Message, key: str) -> None:
     """
-    Функция проверяет количество вводов имейла и паролей пользователм
+    Функция проверяет количество вводов имейла и паролей пользователем
     и в случае превышения лимита в 3 ед. создает в редисе запись
     с ключом 'black_list' со значением True
     """
@@ -71,7 +59,7 @@ async def process_reg_command(message: Message):
 
 
 @dp.message_handler(state=RegStates.EMAIL_MESSAGE)
-async def send_email_message(message: Message):
+async def send_email_message(message: Message) -> None:
     await tracker(message=message, key='email_try')
     secret_key = secrets.token_urlsafe(8)
     await cache.update_data(
@@ -79,7 +67,7 @@ async def send_email_message(message: Message):
         user=message.from_user.id,
         data={'secret_key': secret_key}
     )
-    if isValid(message.text):
+    if is_data_valid(message.text, 'email'):
         check_auth: str = manager.check_auth(message)
         errors = False
         if check_auth == 'Not auth':
@@ -105,7 +93,7 @@ async def send_email_message(message: Message):
 
 
 @dp.message_handler(state=RegStates.KEY_MESSAGE)
-async def input_key_message(message: Message, state: FSMContext):
+async def input_key_message(message: Message, state: FSMContext) -> None:
     await tracker(message=message, key='password_try')
     secret_key = await cache.get_data(
         chat=message.chat.id,

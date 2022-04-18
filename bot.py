@@ -1,12 +1,11 @@
 import logging
-
-from aiogram.dispatcher import Dispatcher
-from aiogram.utils import executor
-
 import data
 import filters
 import handlers
 import middlewares
+
+from aiogram.dispatcher import Dispatcher
+from aiogram.utils import executor
 from loader import bot, dp
 from services.scheduler import SCHEDULER
 
