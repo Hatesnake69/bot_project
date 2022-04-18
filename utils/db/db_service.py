@@ -1,12 +1,13 @@
-import logging
 from datetime import datetime
 
 import pandas as pd
 from aiogram.types import Message
-from google.cloud import bigquery
 from google.oauth2 import service_account
+from google.cloud import bigquery
+import logging
 
 from data import CREDENTIALS_PATH, PROJECT
+
 
 logging.basicConfig(
     filename="logging/bot.log",
@@ -22,7 +23,6 @@ class DBManager:
     Args:
     credentials (service_account.Credentials): файл доступа
     project (str): название проекта
-    bqclient (bigquery.client): клиент
     """
 
     credentials = service_account.Credentials. \
@@ -188,7 +188,7 @@ class DBManager:
         )
         try:
             query_job = self.bqclient.query(query=query)
-            return not(query_job.result().total_rows == 0)
+            return not (query_job.result().total_rows == 0)
         except Exception as e:
             message.answer('Во время запроса к базе данных произошла ошибка')
             logging.error(e)
@@ -329,3 +329,16 @@ class DBManager:
         )
 
         return reply_text.values[0][0]
+
+    def get_df_for_search(self, parse_data):
+
+        query_data = f"""SELECT fullname, email, telegram_name
+                     FROM TG_Bot_Stager.dev_search_view \
+                     WHERE fullname LIKE '%{parse_data['full_name'][0]}%' OR \
+                     fullname LIKE '%{parse_data['full_name'][-1]}%' OR \
+                     email LIKE '%{parse_data['email']}%' OR \
+                     telegram_name LIKE '%{parse_data['telegram_name']}%';"""
+
+        frame_data = pd.read_gbq(query_data, project_id=self.project,
+                                 credentials=self.credentials)
+        return frame_data

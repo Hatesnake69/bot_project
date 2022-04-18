@@ -5,7 +5,6 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardMarkup
 from aiogram.utils.markdown import text
 from aiogram_calendar import SimpleCalendar, simple_cal_callback
-
 from data import CHAT_ID
 from filters import IsRegistered
 from loader import dp
