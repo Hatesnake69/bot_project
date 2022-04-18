@@ -27,7 +27,63 @@ async def create_event_start(message: Message) -> None:
     :param message: сообщение
     """
     await CreateEventForm.event_name.set()
-    await message.reply("Привет!\nУкажи название события.")
+    await message.reply("Привет!\nУкажите название события или нажмите "
+                        "/f для введения текста события целиком")
+
+
+@dp.message_handler(
+    commands=["f"],
+    state="*")
+async def parse_event_start(message: Message) -> None:
+    """
+    Срабатывает на команду /f и выводит сообщение с
+    просьбой ввести пользователя текст события целиком
+    :param message: сообщение
+    """
+    await CreateEventForm.event_text.set()
+    await message.reply("Введите сообщение через пробел как в примере: "
+                        "\nДень рождения 21/02/2022 15:00 Купить торт")
+
+
+@dp.message_handler(state=CreateEventForm.event_text)
+async def set_event_text(message: Message, state: FSMContext) -> None:
+    """
+    Парсит сообщение пользователя и извлекает из него
+    названия, дату, время события и комментарий
+    :param message: сообщение
+    :param state: стейт
+    """
+    try:
+        event_date = re.search(r"(?:0?[1-9]|[12][0-9]|3[01])/"
+                               r"(?:0?[1-9]|1[0-2])/(20[0-9][0-9])(?!\d)",
+                               message.text).group()
+
+        event_time = re.search(r"(([01]\d|2[0-3]):([0-5]\d)|24:00)",
+                               message.text).group()
+
+        event_name = message.text[0:message.text.find(event_date)]
+        event_comment = message.text[message.text.rfind(event_time):]
+
+        async with state.proxy() as data:
+            data["event_date"] = event_date
+            time = datetime.timedelta(
+                hours=int(event_time.split(':')[0]),
+                minutes=int(event_time.split(':')[1]))
+            date_and_time = datetime.datetime.strptime(
+                event_date,
+                "%d/%m/%Y")
+            date_and_time += time
+            if date_check(date_and_time):
+                data["event_time"] = event_time
+            data["event_name"] = event_name
+            data["event_comment"] = event_comment
+
+            await CreateEventForm.event_status.set()
+
+            await message.reply("Событие для всех? (да/нет)")
+
+    except (ValueError, AttributeError):
+        await message.reply("Неверный формат ввода. Повторите попытку")
 
 
 @dp.message_handler(state=CreateEventForm.event_name)
@@ -142,7 +198,6 @@ async def set_event_comment(message: Message, state: FSMContext) -> None:
 
 @dp.message_handler(state=CreateEventForm.event_status)
 async def set_event_status(message: Message, state: FSMContext) -> None:
-
     """
     Перехватывает комментарий со стейтом event_status
     Записывает в state.proxy() комментарий по ключу "event_status"
