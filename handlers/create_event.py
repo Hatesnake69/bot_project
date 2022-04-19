@@ -31,6 +31,7 @@ async def create_event_start(message: Message) -> None:
 
 
 @dp.message_handler(
+    IsRegistered(),
     commands=["f"],
     state="*")
 async def parse_event_start(message: Message) -> None:
@@ -74,12 +75,15 @@ async def set_event_text(message: Message, state: FSMContext) -> None:
             date_and_time += time
             if date_check(date_and_time):
                 data["event_time"] = event_time
-            data["event_name"] = event_name
-            data["event_comment"] = event_comment
+                data["event_name"] = event_name
+                data["event_comment"] = event_comment
 
-            await CreateEventForm.event_status.set()
+                await CreateEventForm.event_status.set()
 
-            await message.reply("Событие для всех? (да/нет)")
+                await message.reply("Событие для всех? (да/нет)")
+            else:
+                await message.reply("Нельзя выбирать дату и время раньше, "
+                                    "чем сейчас")
 
     except (ValueError, AttributeError):
         await message.reply("Неверный формат ввода. Повторите попытку")
