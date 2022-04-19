@@ -172,44 +172,36 @@ class DBManager:
             logging.error(e)
             return False
 
-    def send_to_blacklist(self, message: Message) -> None:
+    def send_to_blacklist(self, user_id: int) -> None:
         """
         Отправляет в bigquery значение поля "is_active" True для юзера
         добавляет в блэклист простыми словами
-        :param message: сообщение пользователя
-        :type message: types.Message
+        :param user_id: сообщение пользователя
+        :type user_id: int
         """
-        tg_id: int = message.from_user.id
+        tg_id: int = user_id
         query: str = (
             f"UPDATE handy-digit-312214.TG_Bot_Stager.users"
-            f"SET is_active = false"
-            f"WHERE telegram_id = {tg_id}"
+            f" SET is_active = false"
+            f" WHERE telegram_id = {tg_id}"
         )
-        try:
-            self.bqclient.query(query=query)
-        except Exception as e:
-            message.answer('Во время запроса к базе данных произошла ошибка')
-            logging.error(e)
+        self.bqclient.query(query=query).result()
 
-    def remove_from_blacklist(self, message: Message) -> None:
+    def remove_from_blacklist(self, user_id: int) -> None:
         """
         Отправляет в bigquery значение поля "is_active" False для юзера
         убирает из блэклиста простыми словами
 
-        :param message: сообщение пользователя
-        :type message: types.Message
+        :param user_id: id пользователя
+        :type user_id: int
         """
-        tg_id: int = message.from_user.id
+        tg_id: int = user_id
         query: str = (
             f"UPDATE handy-digit-312214.TG_Bot_Stager.users"
-            f"SET is_active = true"
-            f"WHERE telegram_id = {tg_id}"
+            f" SET is_active = true"
+            f" WHERE telegram_id = {tg_id}"
         )
-        try:
-            self.bqclient.query(query=query)
-        except Exception as e:
-            message.answer('Во время запроса к базе данных произошла ошибка')
-            logging.error(e)
+        self.bqclient.query(query=query).result()
 
     def check_black_list(self, message: Message) -> bool:
         """
@@ -230,7 +222,6 @@ class DBManager:
             query_job = self.bqclient.query(query=query)
             return not (query_job.result().total_rows == 0)
         except Exception as e:
-            message.answer('Во время запроса к базе данных произошла ошибка')
             logging.error(e)
 
     def send_task_to_bq(self,

@@ -1,4 +1,5 @@
 from .common import dp
+from .admin import dp
 from .authorization import dp
 from .create_event import dp
 from .search import dp
