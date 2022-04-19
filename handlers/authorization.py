@@ -14,7 +14,7 @@ from services import sending_message
 from states import RegStates
 
 
-async def tracker(message: Message, key: str) -> None:
+async def tracker(message: Message, key: str, state: FSMContext) -> None:
     """
     Функция проверяет количество вводов имейла и паролей пользователем
     и в случае превышения лимита в 3 ед. создает в редисе запись
@@ -28,7 +28,10 @@ async def tracker(message: Message, key: str) -> None:
     try:
         if data[key] >= limit:
             data['black_list'] = True
-            manager.send_to_blacklist(message=message)
+            manager.send_to_blacklist(user_id=message.from_user.id)
+            data.pop('email_try', None)
+            data.pop('password_try', None)
+            await state.finish()
         else:
             data[key] += 1
     except KeyError:
@@ -58,8 +61,8 @@ async def process_reg_command(message: Message):
 
 
 @dp.message_handler(state=RegStates.EMAIL_MESSAGE)
-async def send_email_message(message: Message) -> None:
-    await tracker(message=message, key='email_try')
+async def send_email_message(message: Message, state: FSMContext) -> None:
+    await tracker(message=message, key='email_try', state=state)
     secret_key = secrets.token_urlsafe(8)
     await cache.update_data(
         chat=message.chat.id,
@@ -93,7 +96,7 @@ async def send_email_message(message: Message) -> None:
 
 @dp.message_handler(state=RegStates.KEY_MESSAGE)
 async def input_key_message(message: Message, state: FSMContext) -> None:
-    await tracker(message=message, key='password_try')
+    await tracker(message=message, key='password_try', state=state)
     secret_key = await cache.get_data(
         chat=message.chat.id,
         user=message.from_user.id
