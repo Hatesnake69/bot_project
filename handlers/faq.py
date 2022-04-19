@@ -25,7 +25,8 @@ async def send_keyboard(call, keyboard):
 
 @dp.message_handler(
     IsRegistered(),
-    commands=['faq'])
+    commands=['faq'],
+    state="*")
 async def start_category(message: Message):
     """
     Выводит стартовое меню FAQ
