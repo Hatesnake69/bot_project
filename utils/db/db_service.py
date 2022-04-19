@@ -53,6 +53,28 @@ class DBManager:
             logging.error(e)
             return 'Error'
 
+    def check_user_role(self, message: Message) -> bool or str:
+        """
+        Проверяет пользователя на права админа, возвращает True/False
+
+        :param message: сообщение пользователя
+        :type message: Message
+
+        :rtype: str, bool
+        """
+        tg_id = message.from_user.id
+        try:
+            qry = (f"SELECT role FROM handy-digit-312214.TG_Bot_Stager."
+                   f"users WHERE telegram_id = {tg_id}")
+            if pd.read_gbq(qry, project_id=self.project,
+                           credentials=self.credentials).values[0][0] \
+                    == 'admin':
+                return True
+            return False
+        except Exception as e:
+            logging.error(e)
+            return 'Error'
+
     def check_auth(self, message: Message) -> str:
         """
         Возвращает авторизован ли пользователь или Error в случае ошибки
@@ -233,12 +255,11 @@ class DBManager:
             logging.error(e)
             return False
 
-    def get_reminder_text(self, user_id: int, planned_at: datetime):
+    def get_reminder_text(self, planned_at: datetime):
 
         """
         Функция выгружает из БД сообщение напоминание
 
-        :param user_id: id пользователя
         :param planned_at: дата события
         """
 
