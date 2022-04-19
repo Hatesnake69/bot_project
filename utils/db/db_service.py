@@ -1,13 +1,13 @@
+import logging
 from datetime import datetime
+from typing import Union
 
 import pandas as pd
 from aiogram.types import Message
-from google.oauth2 import service_account
 from google.cloud import bigquery
-import logging
+from google.oauth2 import service_account
 
 from data import CREDENTIALS_PATH, PROJECT
-
 
 logging.basicConfig(
     filename="logging/bot.log",
@@ -29,6 +29,24 @@ class DBManager:
         from_service_account_file(CREDENTIALS_PATH)
     project = PROJECT
     bqclient = bigquery.Client(credentials=credentials)
+
+    def make_query(self, query: str) -> \
+            Union[bigquery.table.RowIterator, bool]:
+        """
+        Отправляет запрос и возвращает результат
+
+        :param query: запрос
+        :type query: str
+
+        :rtype: bigquery.table.RowIterator, bool
+        """
+
+        try:
+            query_job = self.bqclient.query(query)
+            return query_job.result()
+        except Exception as e:
+            logging.error(e)
+            return False
 
     def check_user(self, message: Message) -> str:
         """
