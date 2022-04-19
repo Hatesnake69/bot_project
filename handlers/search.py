@@ -2,11 +2,13 @@
 Модуль содержит обработчики, осуществляющие поиск зарегистрированных
 пользователей в базе данных BigQuery, по команде /search.
 """
+
 from aiogram.types import Message
 from loader import dp
 from states.search_states import SearchStates
 from re import compile, fullmatch
 from utils import db
+from aiogram.dispatcher import FSMContext
 
 db_manager = db.DBManager()
 
@@ -41,6 +43,35 @@ async def search_response(message: Message) -> None:
         await message.answer(parse_data)
     else:
         await message.answer(users_search(parse_data))
+    await message.answer("Хотите продолжить поиск?")
+    await SearchStates.AFTER_SEARCH_PROCESS.set()
+
+
+@dp.message_handler(state=SearchStates.AFTER_SEARCH_PROCESS)
+async def after_search_response(message: Message, state: FSMContext) -> None:
+    """
+    Обработчик реализует свои действия после того, как пользователь
+    отправил поисковый запрос, и не зависимо от результата поиска
+    пользователю будет предложено повторить поиск или покинуть его.
+    """
+    if message.text.lower() == 'да':
+        await message.answer(
+            "Что бы найти информацию о зарегистрированном пользователе"
+            " введите: "
+            "Фамилию, Имя, корпоративную почту (@ylab.io) или telegram-логин "
+            "(в формате @username).\n")
+        await SearchStates.SEARCH_PROCESS.set()
+    else:
+        await message.answer("Cписок доступных команд:\n"
+                             "/reg - регистрация в боте;\n"
+                             "/search - поиск зарегистрированных"
+                             " пользователей;\n"
+                             "/create_event - создание запланированной"
+                             " встречи;\n"
+                             "/details_job - информация о времени работы;\n"
+                             "/faq - часто задаваемые вопросы.\n"
+                             "/cancel - отмена текущей команды")
+        await state.finish()
 
 
 def parsing(data: str) -> any:
