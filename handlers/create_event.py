@@ -62,7 +62,7 @@ async def set_event_text(message: Message, state: FSMContext) -> None:
                                message.text).group()
 
         event_name = message.text[0:message.text.find(event_date)]
-        event_comment = message.text[message.text.rfind(event_time):]
+        event_comment = message.text[message.text.rfind(event_time)+5:]
 
         async with state.proxy() as data:
             data["event_date"] = event_date

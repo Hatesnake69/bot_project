@@ -2,7 +2,6 @@ import logging
 from datetime import datetime
 from typing import Union
 
-import pandas as pd
 from aiogram.types import Message
 from google.cloud import bigquery
 from google.oauth2 import service_account
@@ -60,11 +59,12 @@ class DBManager:
 
         tg_id = message.from_user.id
         try:
-            qry = (f"SELECT telegram_id FROM handy-digit-312214.TG_Bot_Stager."
-                   f"users WHERE telegram_id = {tg_id} AND"
-                   f" is_confirmed = true")
-            if pd.read_gbq(qry, project_id=self.project,
-                           credentials=self.credentials).empty:
+            qry: str = (f"SELECT telegram_id FROM "
+                        f"handy-digit-312214.TG_Bot_Stager.users "
+                        f"WHERE telegram_id = {tg_id} AND "
+                        f"is_confirmed = true")
+
+            if len(list(self.bqclient.query(qry).result())) == 0:
                 return 'Not Registered'
             return 'Registered'
         except Exception as e:
@@ -83,15 +83,13 @@ class DBManager:
 
         :rtype: str, bool
         """
+
         tg_id = message.from_user.id
         try:
-            qry = (f"SELECT role FROM handy-digit-312214.TG_Bot_Stager."
-                   f"users WHERE telegram_id = {tg_id}")
-            if pd.read_gbq(
-                qry,
-                project_id=self.project,
-                credentials=self.credentials
-            ).values[0][0] == role:
+            qry: str = (f"SELECT role FROM handy-digit-312214.TG_Bot_Stager."
+                        f"users WHERE telegram_id = {tg_id}")
+
+            if list(self.bqclient.query(qry).result())[0][0] == role:
                 return True
             return False
         except Exception as e:
@@ -110,11 +108,11 @@ class DBManager:
 
         tg_id = int(message.from_user.id)
         try:
-            qry = (f"SELECT telegram_id FROM handy-digit-312214.TG_Bot_Stager."
-                   f"users WHERE telegram_id = {tg_id} AND"
-                   f" is_confirmed = false")
-            if pd.read_gbq(qry, project_id=self.project,
-                           credentials=self.credentials).empty:
+            qry: str = (f"SELECT telegram_id FROM "
+                        f"handy-digit-312214.TG_Bot_Stager."
+                        f"users WHERE telegram_id = {tg_id} AND"
+                        f" is_confirmed = false")
+            if len(list(self.bqclient.query(qry).result())) == 0:
                 return 'Not auth'
             return 'Auth'
         except Exception as e:
@@ -134,20 +132,18 @@ class DBManager:
         tg_name = message.from_user.username
         email = message.text
         date = str(datetime.now().today())
-        df = pd.DataFrame({"telegram_id": [tg_id],
-                           "telegram_name": [f'@{tg_name}'],
-                           "email": [email],
-                           "registration_code": [None],
-                           "is_confirmed": [False],
-                           "regiestred_at": [date],
-                           "is_active": [True],
-                           "role": [None]
-                           })
+        query: str = (
+            f"INSERT INTO handy-digit-312214.TG_Bot_Stager.users"
+            f"(telegram_id, telegram_name, email, registration_code, "
+            f"is_confirmed, regiestred_at, is_active, role)"
+            f" VALUES ({tg_id}, f'@{tg_name}', '{email}', "
+            f"{None}, {False}, '{date}', {True}, {None})"
+        )
+
         try:
-            df.to_gbq("handy-digit-312214.TG_Bot_Stager.users",
-                      project_id=self.project,
-                      credentials=self.credentials,
-                      if_exists="append", )
+            result = self.bqclient.query(query=query)
+            result.result()
+
             return False
         except Exception as e:
             logging.error(e)
@@ -165,10 +161,10 @@ class DBManager:
 
         tg_id: int = message.from_user.id
         secret_key: str = message.text
-        query = (f"UPDATE handy-digit-312214.TG_Bot_Stager.users"
-                 f" SET is_confirmed = true ,"
-                 f" registration_code = '{secret_key}'"
-                 f" WHERE telegram_id = {tg_id}")
+        query: str = (f"UPDATE handy-digit-312214.TG_Bot_Stager.users"
+                      f" SET is_confirmed = true ,"
+                      f" registration_code = '{secret_key}'"
+                      f" WHERE telegram_id = {tg_id}")
         try:
             query_job = self.bqclient.query(query)
             query_job.result()
@@ -235,34 +231,24 @@ class DBManager:
                         planned_at: datetime,
                         created_at: datetime):
         """
-            Отправляет данные о событии в хранилище BigQuery
+        Отправляет данные о событии в хранилище BigQuery
 
-            :param user_id: id пользователя
-            :param message_text: текст дл напоминания
-            :param planned_at: дата события
-            :param created_at: время создания
+        :param user_id: id пользователя
+        :param message_text: текст дл напоминания
+        :param planned_at: дата события
+        :param created_at: время создания
         """
 
-        try:
-            schema = [
-                {"name": "telegram_id", "type": "INTEGER"},
-                {"name": "message_text", "type": "STRING"},
-                {"name": "planned_at", "type": "DATETIME"},
-                {"name": "is_sent", "type": "BOOLEAN"},
-                {"name": "created_at", "type": "DATETIME"}
-            ]
-            df = pd.DataFrame({"telegram_id": [user_id],
-                               "message_text": [message_text],
-                               "planned_at": [planned_at],
-                               "is_sent": [True],
-                               "created_at": [created_at]
-                               })
+        query: str = (
+            f"INSERT INTO handy-digit-312214.TG_Bot_Stager.remind_msg"
+            f"(telegram_id, message_text, planned_at, is_sent, created_at)"
+            f" VALUES ({user_id}, '{message_text}', '{planned_at}', {True},"
+            f"'{created_at}')"
+        )
 
-            df.to_gbq("handy-digit-312214.TG_Bot_Stager.remind_msg",
-                      project_id=PROJECT,
-                      credentials=self.credentials,
-                      if_exists="append",
-                      table_schema=schema)
+        try:
+            result = self.bqclient.query(query=query)
+            result.result()
 
             return True
         except Exception as e:
@@ -277,31 +263,14 @@ class DBManager:
         :param planned_at: дата события
         """
 
-        query = (
+        query: str = (
             f"SELECT * FROM "
             f"handy-digit-312214.TG_Bot_Stager.remind_msg WHERE "
             f"planned_at = DATETIME({planned_at.year}, {planned_at.month}, "
             f"{planned_at.day}, {planned_at.hour},{planned_at.minute}, 0) "
         )
 
-        reminder_text = pd.read_gbq(
-            query, project_id=PROJECT, credentials=self.credentials
-        )
-
-        return reminder_text
-
-    def get_df_users(self):
-        """
-        Функция выгружает из БД id уникальных пользователей
-
-        """
-
-        query_users = """SELECT DISTINCT telegram_id
-                      FROM TG_Bot_Stager.salaryDetailsByTrackdate"""
-        df_users = pd.read_gbq(
-            query_users, project_id=PROJECT, credentials=self.credentials
-        )
-        return df_users
+        return list(self.bqclient.query(query).result())
 
     def get_df_for_graph(self,
                          user_id: int,
@@ -364,29 +333,25 @@ class DBManager:
         :param faq_key: ключ записи
         """
 
-        query = f"SELECT answer FROM TG_Bot_Stager.faq_datas " \
-                f"WHERE key = '{faq_key}'"
+        query: str = (f"SELECT * FROM "
+                      f"handy-digit-312214.TG_Bot_Stager.faq_datas "
+                      f"WHERE key ='{faq_key}'")
 
-        reply_text = pd.read_gbq(
-            query, project_id=PROJECT, credentials=self.credentials
-        )
-
-        return reply_text.values[0][0]
+        return list(self.bqclient.query(query).result())[0][3]
 
     def get_df_for_search(self, parse_data):
 
-        query_data = f"""SELECT fullname, email, telegram_name
+        query_data: str = f"""SELECT fullname, email, telegram_name
                      FROM TG_Bot_Stager.dev_search_view \
                      WHERE fullname LIKE '%{parse_data['full_name'][0]}%' OR \
                      fullname LIKE '%{parse_data['full_name'][-1]}%' OR \
                      email LIKE '%{parse_data['email']}%' OR \
                      telegram_name LIKE '%{parse_data['telegram_name']}%';"""
 
-        frame_data = pd.read_gbq(query_data, project_id=self.project,
-                                 credentials=self.credentials)
-        return frame_data
+        return self.bqclient.query(query_data).result()
 
     def get_user_id_list(self):
+
         query = (
             "SELECT DISTINCT telegram_id FROM"
             " handy-digit-312214.TG_Bot_Stager.users"
