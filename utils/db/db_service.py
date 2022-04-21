@@ -294,7 +294,8 @@ class DBManager:
             f"'{salary_period}' "
             f"OR notApprovedSalaryPeriod  = '{salary_period}'"
             f" GROUP BY telegram_id, "
-            f"trackdate, projectName order by trackdate "
+            f"trackdate, projectName, salaryPeriod, notApprovedSalaryPeriod "
+            f" order by trackdate "
         )
 
         try:
@@ -339,6 +340,71 @@ class DBManager:
 
         return list(self.bqclient.query(query).result())[0][3]
 
+    def send_confirm_for_salary_period(
+            self, user_id: int,
+            message_id: int,
+            mailing_date: datetime,
+            salary_period: str) -> None:
+        """
+        Функция добавляет в БД данные по зарплатному периоду
+
+        """
+
+        query: str = (
+            f"INSERT INTO handy-digit-312214.TG_Bot_Stager.salary_response"
+            f"(mailing_date, telegram_id, message_id, salary_period)"
+            f"VALUES ('{mailing_date.strftime('%Y-%m-%d %H:%M:%S')}',"
+            f"{user_id}, "
+            f"{message_id},'{salary_period}')"
+        )
+
+        try:
+            bq = bigquery.Client(credentials=self.credentials)
+            result = bq.query(query=query)
+            result.result()
+        except Exception as e:
+            logging.error(e)
+
+    def update_data_for_salaryperiod(
+            self,
+            user_id: int,
+            message_id: int,
+            is_confirmed: bool,
+            response_comment: str,
+            cofirmed_at: datetime
+    ) -> None:
+        """
+        Функция обновляет значения согласовано/не согласовано отработанное
+        время, проставляет время согласования и заполняет поле комментарий,
+        если он есть
+
+        """
+ 
+        if response_comment:
+            query: str = (
+                f"UPDATE handy-digit-312214.TG_Bot_Stager.salary_response "
+                f"SET is_confirmed = {is_confirmed},"
+                f"response_comment = '{response_comment}',"
+                f"confirmed_at = '{cofirmed_at.strftime('%Y-%m-%d %H:%M:%S')}'"
+                f"WHERE telegram_id = {user_id} "
+                f"AND message_id = {message_id}"
+            )
+
+        else:
+            query: str = (
+                f"UPDATE handy-digit-312214.TG_Bot_Stager.salary_response "
+                f"SET is_confirmed = {is_confirmed}, "
+                f"confirmed_at = '{cofirmed_at.strftime('%Y-%m-%d %H:%M:%S')}'"
+                f"WHERE telegram_id = {user_id} "
+                f"AND message_id = {message_id}"
+            )
+
+        try:
+            query_job = self.bqclient.query(query)
+            query_job.result()
+        except Exception as e:
+            logging.error(e)
+
     def get_df_for_search(self, parse_data):
 
         query_data: str = f"""SELECT fullname, email, telegram_name
@@ -348,7 +414,39 @@ class DBManager:
                      email LIKE '%{parse_data['email']}%' OR \
                      telegram_name LIKE '%{parse_data['telegram_name']}%';"""
 
-        return self.bqclient.query(query_data).result()
+        try:
+            query_job = self.bqclient.query(query_data)
+            return query_job.result()
+        except Exception as e:
+            logging.error(e)
+
+    def get_users_selaryperiod(
+            self,
+            salary_period: str
+    ) -> bigquery.table.RowIterator:
+        """
+        Функция выгружает из БД всех пользователей по заданному периоду
+
+        """
+
+        query: str = (f"SELECT us.telegram_id, sal.trackdate,"
+                      f"sal.projectName, SUM(sal.timefact) as time "
+                      f"FROM TG_Bot_Stager.users as us "
+                      f"JOIN TG_Bot_Stager.salaryDetailsByTrackdate as sal "
+                      f"ON us.telegram_id = sal.telegram_id "
+                      f"WHERE  us.is_active = True AND us.is_confirmed = True "
+                      f"AND sal.salaryPeriod = '{salary_period}'"
+                      f"OR sal.notApprovedSalaryPeriod  = '{salary_period}'"
+                      f"GROUP BY us.telegram_id, sal.trackdate,"
+                      f" sal.projectName"
+                      f" ORDER BY us.telegram_id "
+                      )
+
+        try:
+            query_job = self.bqclient.query(query)
+            return query_job.result()
+        except Exception as e:
+            logging.error(e)
 
     def get_user_id_list(self):
 

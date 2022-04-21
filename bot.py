@@ -7,7 +7,7 @@ import middlewares
 from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
 from loader import bot, dp
-from services.scheduler import SCHEDULER
+from services.set_scheduler import SCHEDULER
 
 logging.basicConfig(
     filename="logging/bot.log",
