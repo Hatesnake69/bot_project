@@ -65,9 +65,10 @@ async def send_reminder_to_user(user_id: int, planned_at: datetime):
     :param user_id: id пользователя
     :param planned_at: дата события
     """
-    reminder_text = db_manager.get_reminder_text(user_id, planned_at)
-    for _, row in reminder_text.iterrows():
-        await bot.send_message(row[0], text=row['message_text'])
+    reminder_text = db_manager.get_reminder_text(planned_at)
+
+    for row in reminder_text:
+        await bot.send_message(row[0], text=row[1])
 
 
 def set_scheduler(
@@ -88,8 +89,8 @@ def set_scheduler(
     :param comment: комментарий пользователя
     """
 
-    text_for_scheduler = f"Напоминание! Cегодня {event} в" \
-                         f" {event_time}: {comment}"
+    text_for_scheduler = f"Напоминание! Cегодня {event}в" \
+                         f" {event_time} {comment}"
     event_date = datetime.strptime(
         f"{event_date} {event_time}", "%d/%m/%Y %H:%M"
     )
