@@ -379,7 +379,6 @@ class DBManager:
         если он есть
 
         """
- 
         if response_comment:
             query: str = (
                 f"UPDATE handy-digit-312214.TG_Bot_Stager.salary_response "
