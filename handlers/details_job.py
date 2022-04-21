@@ -1,5 +1,6 @@
+from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
-from aiogram.types import Message, ReplyKeyboardMarkup
+from aiogram.types import Message, ReplyKeyboardMarkup, ReplyKeyboardRemove
 
 from filters import IsRegistered
 from loader import db_manager, dp
@@ -16,16 +17,19 @@ async def get_menu_salary_period(message: Message) -> None:
        :param message: сообщение
 
     """
-
     kb_period = ReplyKeyboardMarkup()
-    salary_periods = db_manager.get_salary_periods_user(message.chat.id)
-    df = salary_periods.melt(
-        value_vars=['salaryPeriod', 'notApprovedSalaryPeriod']
-    )
+    df_iterable = db_manager.get_salary_periods_user(
+        message.chat.id
+    ).to_dataframe_iterable()
+    for salary_periods in df_iterable:
+        df = salary_periods.melt(
+            value_vars=['salaryPeriod', 'notApprovedSalaryPeriod']
+        )
     df = df[
         df.value.astype(str).str.contains('ЗП') |
         df.value.astype(str).str.contains('Аванс')
         ]
+
     if df.empty:
         await message.answer("У вас нет доступных периодов")
     else:
@@ -36,18 +40,24 @@ async def get_menu_salary_period(message: Message) -> None:
 
 
 @dp.message_handler(state=DetailsJobForm.choose_kb)
-async def send_graph(message: Message) -> None:
+async def send_graph(message: Message, state: FSMContext) -> None:
     """
        Формирует график по ЗП и отправляет его
        :param message: сообщение
 
     """
-
-    df = db_manager.get_df_for_graph(message.chat.id, message.text)
-    if not df.empty:
-        labels = get_xlabel_for_graph(df)
-        get_image(df, labels)
-        await message.bot.send_photo(
-            message.chat.id, open("saved_graph.png", "rb"),
-            caption=message.text
-        )
+    df_iterable = db_manager.get_df_for_graph(
+        message.chat.id, message.text
+    ).to_dataframe_iterable()
+    for df in df_iterable:
+        if not df.empty:
+            labels = get_xlabel_for_graph(df)
+            get_image(df, labels)
+            await message.bot.send_photo(
+                message.chat.id, open("saved_graph.png", "rb"),
+                caption=message.text, reply_markup=ReplyKeyboardRemove()
+            )
+        else:
+            await message.answer("Заданный период не найден",
+                                 reply_markup=ReplyKeyboardRemove())
+    await state.finish()

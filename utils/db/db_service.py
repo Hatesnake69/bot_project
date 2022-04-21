@@ -298,7 +298,10 @@ class DBManager:
         )
         return df_users
 
-    def get_df_for_graph(self, user_id: int, salary_period: datetime.date):
+    def get_df_for_graph(self,
+                         user_id: int,
+                         salary_period: datetime.date
+                         ) -> bigquery.table.RowIterator:
 
         """
         Формирует Dataframe через запрос к БД
@@ -310,7 +313,7 @@ class DBManager:
          :type salary_period: datetime.date
 
         """
-        sql_group_project = (
+        query: str = (
             f"SELECT  trackdate, projectName, SUM(timefact) AS time FROM "
             f"TG_Bot_Stager.salaryDetailsByTrackdate  "
             f"WHERE  telegram_id = {user_id} and salaryPeriod = "
@@ -319,12 +322,15 @@ class DBManager:
             f" GROUP BY telegram_id, "
             f"trackdate, projectName order by trackdate "
         )
-        df = pd.read_gbq(
-            sql_group_project, project_id=PROJECT, credentials=self.credentials
-        )
-        return df
 
-    def get_salary_periods_user(self, user_id: int):
+        try:
+            query_job = self.bqclient.query(query)
+            return query_job.result()
+        except Exception as e:
+            logging.error(e)
+
+    def get_salary_periods_user(self,
+                                user_id: int) -> bigquery.table.RowIterator:
         """
         Функция выгружает из БД зарплатные периоды
 
@@ -333,15 +339,17 @@ class DBManager:
 
         """
 
-        query = (
-                f"SELECT DISTINCT salaryPeriod, notApprovedSalaryPeriod"
-                f" FROM TG_Bot_Stager.salaryDetailsByTrackdate "
-                f"WHERE telegram_id ={user_id}"
+        query: str = (
+            f"SELECT DISTINCT salaryPeriod, notApprovedSalaryPeriod"
+            f" FROM TG_Bot_Stager.salaryDetailsByTrackdate "
+            f"WHERE telegram_id ={user_id}"
         )
-        df = pd.read_gbq(
-            query, project_id=PROJECT, credentials=self.credentials
-        )
-        return df
+
+        try:
+            query_job = self.bqclient.query(query)
+            return query_job.result()
+        except Exception as e:
+            logging.error(e)
 
     def get_df_for_faq(self, faq_key):
         """
