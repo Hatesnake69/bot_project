@@ -71,12 +71,15 @@ class DBManager:
             logging.error(e)
             return 'Error'
 
-    def check_user_role(self, message: Message) -> bool or str:
+    def check_user_role(self, message: Message, role: str) -> bool or str:
         """
         Проверяет пользователя на права админа, возвращает True/False
 
         :param message: сообщение пользователя
         :type message: Message
+        :param role: проверяемая роль
+        :type role: str
+
 
         :rtype: str, bool
         """
@@ -84,9 +87,11 @@ class DBManager:
         try:
             qry = (f"SELECT role FROM handy-digit-312214.TG_Bot_Stager."
                    f"users WHERE telegram_id = {tg_id}")
-            if pd.read_gbq(qry, project_id=self.project,
-                           credentials=self.credentials).values[0][0] \
-                    == 'admin':
+            if pd.read_gbq(
+                qry,
+                project_id=self.project,
+                credentials=self.credentials
+            ).values[0][0] == role:
                 return True
             return False
         except Exception as e:
@@ -372,3 +377,12 @@ class DBManager:
         frame_data = pd.read_gbq(query_data, project_id=self.project,
                                  credentials=self.credentials)
         return frame_data
+
+    def get_user_id_list(self):
+        query = (
+            "SELECT DISTINCT telegram_id FROM"
+            " handy-digit-312214.TG_Bot_Stager.users"
+            " WHERE is_confirmed is true"
+        )
+        result = list(self.make_query(query=query))
+        return result

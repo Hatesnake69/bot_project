@@ -4,4 +4,5 @@ from .details_job_form import DetailsJobForm
 from .reg_states import RegStates
 from .search_states import SearchStates
 from .ban_unban_user_form import UnBanUserForm, BanUserForm
+from .admin_message import AdminMessageStates
 

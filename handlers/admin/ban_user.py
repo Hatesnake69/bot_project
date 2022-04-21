@@ -6,7 +6,7 @@ from aiogram.dispatcher import FSMContext
 from loader import dp, db_manager
 from states import BanUserForm
 from data import cache
-from filters import IsUserAdmin
+from filters import UserRoleFilter
 
 logging.basicConfig(
     filename="logging/bot.log",
@@ -15,7 +15,11 @@ logging.basicConfig(
 )
 
 
-@dp.message_handler(IsUserAdmin(), commands=["ban_user"], state="*")
+@dp.message_handler(
+    UserRoleFilter(role='admin'),
+    commands=["ban_user"],
+    state="*"
+)
 async def ban_user_start(message: Message) -> None:
     """
     Перехватывает команду "/ban_user"
