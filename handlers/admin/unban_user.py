@@ -6,7 +6,7 @@ from aiogram.dispatcher import FSMContext
 from loader import dp, db_manager
 from states import UnBanUserForm
 from data import cache
-from filters import IsUserAdmin
+from filters import UserRoleFilter
 
 logging.basicConfig(
     filename="logging/bot.log",
@@ -15,7 +15,11 @@ logging.basicConfig(
 )
 
 
-@dp.message_handler(IsUserAdmin(), commands=["unban_user"], state="*")
+@dp.message_handler(
+    UserRoleFilter(role='admin'),
+    commands=["unban_user"],
+    state="*"
+)
 async def unban_user_start(message: Message) -> None:
     """
     Перехватывает команду "/unban_user"
