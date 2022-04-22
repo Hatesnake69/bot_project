@@ -72,7 +72,7 @@ class AbstractDBManager(ABC):
         pass
 
     @abstractmethod
-    def send_confirm_for_salary_period(
+    def send_confirm_for_salaryperiod(
             self, user_id: int,
             message_id: int,
             mailing_date: datetime,
