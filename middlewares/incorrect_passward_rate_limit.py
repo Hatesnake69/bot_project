@@ -31,9 +31,9 @@ class ThrottlingMiddleware(BaseMiddleware):
                 await message.answer('Доступ заблокирован')
                 raise CancelHandler()
         except KeyError:
-            if manager.check_black_list(message=message):
+            if await manager.check_black_list(message=message):
                 data['black_list'] = True
-                cache.update_data(
+                await cache.update_data(
                     user=message.from_user.id,
                     chat=message.chat.id,
                     data=data
