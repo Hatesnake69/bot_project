@@ -2,12 +2,14 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 
 from aiogram.types import Message
+from google.cloud import bigquery
 
 
 class AbstractDBManager(ABC):
     def __init__(self, credentials, project):
         self.credentials = credentials
         self.project = project
+        self.bqclient = bigquery.Client(credentials=self.credentials)
 
     @abstractmethod
     def make_query(self, query: str):
@@ -18,7 +20,7 @@ class AbstractDBManager(ABC):
         pass
 
     @abstractmethod
-    def check_user_role(self, message: Message):
+    def check_user_role(self, message: Message, role: str) -> bool or str:
         pass
 
     @abstractmethod
@@ -58,10 +60,6 @@ class AbstractDBManager(ABC):
         pass
 
     @abstractmethod
-    def get_df_users(self):
-        pass
-
-    @abstractmethod
     def get_df_for_graph(self, user_id: int, salary_period: datetime.date):
         pass
 
@@ -74,5 +72,35 @@ class AbstractDBManager(ABC):
         pass
 
     @abstractmethod
-    def get_df_for_search(self, parse_data: dict[str: str]):
+    def send_confirm_for_salary_period(
+            self, user_id: int,
+            message_id: int,
+            mailing_date: datetime,
+            salary_period: str) -> None:
+        pass
+
+    @abstractmethod
+    def update_data_for_salaryperiod(
+            self,
+            user_id: int,
+            message_id: int,
+            is_confirmed: bool,
+            response_comment: str,
+            cofirmed_at: datetime
+    ) -> None:
+        pass
+
+    @abstractmethod
+    def get_df_for_search(self, parse_data: dict):
+        pass
+
+    @abstractmethod
+    def get_users_selaryperiod(
+            self,
+            salary_period: str
+    ) -> bigquery.table.RowIterator:
+        pass
+
+    @abstractmethod
+    def get_user_id_list(self):
         pass
