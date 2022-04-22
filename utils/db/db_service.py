@@ -409,8 +409,13 @@ class DBManager(AbstractDBManager):
         except Exception as e:
             logging.error(e)
 
-    def get_user_id_list(self):
+    def get_user_id_list(self) -> list[str]:
+        """
+        Метод выводит список telegram_id
+        уникальных подтвержденных сотрудников из бд
+        :rtype: list
 
+        """
         query = (
             "SELECT DISTINCT telegram_id FROM"
             " handy-digit-312214.TG_Bot_Stager.users"
