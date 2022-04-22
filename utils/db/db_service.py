@@ -4,30 +4,21 @@ from typing import Union
 
 from aiogram.types import Message
 from google.cloud import bigquery
-from google.oauth2 import service_account
 
-from data import CREDENTIALS_PATH, PROJECT
+from utils.decorators import bq_error_handler
 
-logging.basicConfig(
-    filename="logging/bot.log",
-    level=logging.ERROR,
-    format="%(asctime)s - %(name)s- %(levelname)s : %(message)s",
-)
+from .storage import AbstractDBManager
 
 
-class DBManager:
+class DBManager(AbstractDBManager):
     """
     Данный класс содержит методы для работы с базой данных
 
     Args:
     credentials (service_account.Credentials): файл доступа
     project (str): название проекта
+    bqclient(bigquery.Client): клиент
     """
-
-    credentials = service_account.Credentials. \
-        from_service_account_file(CREDENTIALS_PATH)
-    project = PROJECT
-    bqclient = bigquery.Client(credentials=credentials)
 
     def make_query(self, query: str) -> \
             Union[bigquery.table.RowIterator, bool]:
@@ -40,38 +31,32 @@ class DBManager:
         :rtype: bigquery.table.RowIterator, bool
         """
 
-        try:
-            query_job = self.bqclient.query(query)
-            return query_job.result()
-        except Exception as e:
-            logging.error(e)
-            return False
+        query_job = self.bqclient.query(query)
+        return query_job.result()
 
-    def check_user(self, message: Message) -> str:
+    @bq_error_handler
+    async def check_user(self, message: Message) -> bool:
         """
-        Возвращает зарегистрирован ли пользователь или Error в случае ошибки
+        Возвращает зарегистрирован ли пользователь
 
         :param message: сообщение пользователя
         :type message: Message
 
-        :rtype: str
+        :rtype: bool
         """
 
         tg_id = message.from_user.id
-        try:
-            qry: str = (f"SELECT telegram_id FROM "
-                        f"handy-digit-312214.TG_Bot_Stager.users "
-                        f"WHERE telegram_id = {tg_id} AND "
-                        f"is_confirmed = true")
 
-            if len(list(self.bqclient.query(qry).result())) == 0:
-                return 'Not Registered'
-            return 'Registered'
-        except Exception as e:
-            logging.error(e)
-            return 'Error'
+        qry: str = (f"SELECT telegram_id FROM "
+                    f"handy-digit-312214.TG_Bot_Stager.users "
+                    f"WHERE telegram_id = {tg_id} AND "
+                    f"is_confirmed = true")
 
-    def check_user_role(self, message: Message, role: str) -> bool or str:
+        return len(list(self.make_query(qry))) != 0
+
+    @bq_error_handler
+    async def check_user_role(self, message: Message, role: str) \
+            -> bool:
         """
         Проверяет пользователя на права админа, возвращает True/False
 
@@ -85,20 +70,18 @@ class DBManager:
         """
 
         tg_id = message.from_user.id
-        try:
-            qry: str = (f"SELECT role FROM handy-digit-312214.TG_Bot_Stager."
-                        f"users WHERE telegram_id = {tg_id}")
 
-            if list(self.bqclient.query(qry).result())[0][0] == role:
-                return True
-            return False
-        except Exception as e:
-            logging.error(e)
-            return 'Error'
+        qry: str = (f"SELECT role FROM handy-digit-312214.TG_Bot_Stager."
+                    f"users WHERE telegram_id = {tg_id}")
 
-    def check_auth(self, message: Message) -> str:
+        if list(self.make_query(qry))[0][0] == role:
+            return True
+        return False
+
+    @bq_error_handler
+    async def check_auth(self, message: Message) -> bool:
         """
-        Возвращает авторизован ли пользователь или Error в случае ошибки
+        Возвращает авторизован ли пользователь
 
         :param message: сообщение пользователя
         :type message: Message
@@ -107,21 +90,17 @@ class DBManager:
         """
 
         tg_id = int(message.from_user.id)
-        try:
-            qry: str = (f"SELECT telegram_id FROM "
-                        f"handy-digit-312214.TG_Bot_Stager."
-                        f"users WHERE telegram_id = {tg_id} AND"
-                        f" is_confirmed = false")
-            if len(list(self.bqclient.query(qry).result())) == 0:
-                return 'Not auth'
-            return 'Auth'
-        except Exception as e:
-            logging.error(e)
-            return 'Error'
 
-    def registration(self, message: Message) -> bool:
+        qry: str = (f"SELECT telegram_id FROM "
+                    f"handy-digit-312214.TG_Bot_Stager."
+                    f"users WHERE telegram_id = {tg_id} AND"
+                    f" is_confirmed = false")
+        return len(list(self.make_query(qry))) != 0
+
+    @bq_error_handler
+    async def registration(self, message: Message) -> None:
         """
-        Записывает пользователя, если нет исключений вернет False
+        Записывает пользователя
 
         :param message: сообщение пользователя из которого ожидается email
         :type message: types.Message
@@ -129,27 +108,21 @@ class DBManager:
         """
 
         tg_id = message.from_user.id
-        tg_name = message.from_user.username
+        tg_name = f"@{message.from_user.username}"
         email = message.text
         date = str(datetime.now().today())
         query: str = (
             f"INSERT INTO handy-digit-312214.TG_Bot_Stager.users"
             f"(telegram_id, telegram_name, email, registration_code, "
             f"is_confirmed, regiestred_at, is_active, role)"
-            f" VALUES ({tg_id}, f'@{tg_name}', '{email}', "
-            f"{None}, {False}, '{date}', {True}, {None})"
+            f" VALUES ({tg_id}, '{tg_name}', '{email}', "
+            f"'{None}', {False}, '{date}', {True}, '{None}')"
         )
 
-        try:
-            result = self.bqclient.query(query=query)
-            result.result()
+        self.make_query(query)
 
-            return False
-        except Exception as e:
-            logging.error(e)
-            return True
-
-    def authentication(self, message: Message) -> bool:
+    @bq_error_handler
+    async def authentication(self, message: Message) -> None:
         """
         Аутентифицирует пользователя
 
@@ -165,13 +138,8 @@ class DBManager:
                       f" SET is_confirmed = true ,"
                       f" registration_code = '{secret_key}'"
                       f" WHERE telegram_id = {tg_id}")
-        try:
-            query_job = self.bqclient.query(query)
-            query_job.result()
-            return True
-        except Exception as e:
-            logging.error(e)
-            return False
+
+        self.make_query(query)
 
     def send_to_blacklist(self, user_id: int) -> None:
         """
@@ -186,7 +154,10 @@ class DBManager:
             f" SET is_active = false"
             f" WHERE telegram_id = {tg_id}"
         )
-        self.bqclient.query(query=query).result()
+        try:
+            self.make_query(query)
+        except Exception as e:
+            logging.error(e)
 
     def remove_from_blacklist(self, user_id: int) -> None:
         """
@@ -202,9 +173,13 @@ class DBManager:
             f" SET is_active = true"
             f" WHERE telegram_id = {tg_id}"
         )
-        self.bqclient.query(query=query).result()
+        try:
+            self.make_query(query)
+        except Exception as e:
+            logging.error(e)
 
-    def check_black_list(self, message: Message) -> bool:
+    @bq_error_handler
+    async def check_black_list(self, message: Message) -> bool:
         """
         Возвращает True, если пользователь в блэклисте
 
@@ -219,11 +194,8 @@ class DBManager:
             f"SELECT telegram_id FROM handy-digit-312214.TG_Bot_Stager."
             f"users WHERE telegram_id = {tg_id} AND is_active = false"
         )
-        try:
-            query_job = self.bqclient.query(query=query)
-            return not (query_job.result().total_rows == 0)
-        except Exception as e:
-            logging.error(e)
+
+        return not (self.make_query(query).total_rows == 0)
 
     def send_task_to_bq(self,
                         user_id:
@@ -245,11 +217,8 @@ class DBManager:
             f" VALUES ({user_id}, '{message_text}', '{planned_at}', {True},"
             f"'{created_at}')"
         )
-
         try:
-            result = self.bqclient.query(query=query)
-            result.result()
-
+            self.make_query(query)
             return True
         except Exception as e:
             logging.error(e)
@@ -270,7 +239,10 @@ class DBManager:
             f"{planned_at.day}, {planned_at.hour},{planned_at.minute}, 0) "
         )
 
-        return list(self.bqclient.query(query).result())
+        try:
+            return list(self.make_query(query))
+        except Exception as e:
+            logging.error(e)
 
     def get_df_for_graph(self,
                          user_id: int,
@@ -297,15 +269,14 @@ class DBManager:
             f"trackdate, projectName, salaryPeriod, notApprovedSalaryPeriod "
             f" order by trackdate "
         )
-
         try:
-            query_job = self.bqclient.query(query)
-            return query_job.result()
+            return self.make_query(query)
         except Exception as e:
             logging.error(e)
 
     def get_salary_periods_user(self,
-                                user_id: int) -> bigquery.table.RowIterator:
+                                user_id: int)\
+            -> bigquery.table.RowIterator:
         """
         Функция выгружает из БД зарплатные периоды
 
@@ -319,10 +290,8 @@ class DBManager:
             f" FROM TG_Bot_Stager.salaryDetailsByTrackdate "
             f"WHERE telegram_id ={user_id}"
         )
-
         try:
-            query_job = self.bqclient.query(query)
-            return query_job.result()
+            return self.make_query(query)
         except Exception as e:
             logging.error(e)
 
@@ -337,8 +306,69 @@ class DBManager:
         query: str = (f"SELECT * FROM "
                       f"handy-digit-312214.TG_Bot_Stager.faq_datas "
                       f"WHERE key ='{faq_key}'")
+        try:
+            return list(self.make_query(query))[0][3]
+        except Exception as e:
+            logging.error(e)
 
-        return list(self.bqclient.query(query).result())[0][3]
+    def send_confirm_for_salary_period(
+            self, user_id: int,
+            message_id: int,
+            mailing_date: datetime,
+            salary_period: str) -> None:
+        """
+        Функция добавляет в БД данные по зарплатному периоду
+
+        """
+
+        query: str = (
+            f"INSERT INTO handy-digit-312214.TG_Bot_Stager.salary_response"
+            f"(mailing_date, telegram_id, message_id, salary_period)"
+            f"VALUES ('{mailing_date.strftime('%Y-%m-%d %H:%M:%S')}',"
+            f"{user_id}, "
+            f"{message_id},'{salary_period}')"
+        )
+        try:
+            self.make_query(query)
+        except Exception as e:
+            logging.error(e)
+
+    def update_data_for_salaryperiod(
+            self,
+            user_id: int,
+            message_id: int,
+            is_confirmed: bool,
+            response_comment: str,
+            cofirmed_at: datetime
+    ) -> None:
+        """
+        Функция обновляет значения согласовано/не согласовано отработанное
+        время, проставляет время согласования и заполняет поле комментарий,
+        если он есть
+        """
+
+        if response_comment:
+            query: str = (
+                f"UPDATE handy-digit-312214.TG_Bot_Stager.salary_response "
+                f"SET is_confirmed = {is_confirmed},"
+                f"response_comment = '{response_comment}',"
+                f"confirmed_at = '{cofirmed_at.strftime('%Y-%m-%d %H:%M:%S')}'"
+                f"WHERE telegram_id = {user_id} "
+                f"AND message_id = {message_id}"
+            )
+
+        else:
+            query: str = (
+                f"UPDATE handy-digit-312214.TG_Bot_Stager.salary_response "
+                f"SET is_confirmed = {is_confirmed}, "
+                f"confirmed_at = '{cofirmed_at.strftime('%Y-%m-%d %H:%M:%S')}'"
+                f"WHERE telegram_id = {user_id} "
+                f"AND message_id = {message_id}"
+            )
+        try:
+            self.make_query(query)
+        except Exception as e:
+            logging.error(e)
 
     def send_confirm_for_salary_period(
             self, user_id: int,
@@ -413,10 +443,8 @@ class DBManager:
                      fullname LIKE '%{parse_data['full_name'][-1]}%' OR \
                      email LIKE '%{parse_data['email']}%' OR \
                      telegram_name LIKE '%{parse_data['telegram_name']}%';"""
-
         try:
-            query_job = self.bqclient.query(query_data)
-            return query_job.result()
+            return self.make_query(query_data)
         except Exception as e:
             logging.error(e)
 
@@ -441,10 +469,8 @@ class DBManager:
                       f" sal.projectName"
                       f" ORDER BY us.telegram_id "
                       )
-
         try:
-            query_job = self.bqclient.query(query)
-            return query_job.result()
+            return self.make_query(query)
         except Exception as e:
             logging.error(e)
 
@@ -455,5 +481,8 @@ class DBManager:
             " handy-digit-312214.TG_Bot_Stager.users"
             " WHERE is_confirmed is true"
         )
-        result = list(self.make_query(query=query))
-        return result
+        try:
+            result = list(self.make_query(query=query))
+            return result
+        except Exception as e:
+            logging.error(e)

@@ -3,14 +3,13 @@
 пользователей в базе данных BigQuery, по команде /search.
 """
 
-from aiogram.types import Message
-from loader import dp
-from states.search_states import SearchStates
 from re import compile, fullmatch
-from utils import db
-from aiogram.dispatcher import FSMContext
 
-db_manager = db.DBManager()
+from aiogram.dispatcher import FSMContext
+from aiogram.types import Message
+
+from loader import db_manager, dp
+from states.search_states import SearchStates
 
 
 @dp.message_handler(commands=["search"], state="*")
@@ -155,18 +154,21 @@ def users_search(parse_data: dict) -> str:
 
     :rtype: str
     """
-    frame_data = db_manager.get_df_for_search(parse_data)
-    search_answer = frame_data.to_dict(orient="index")
-    if search_answer:
-        for index in search_answer:
-            if len(parse_data['full_name']) != 2:
-                return view(search_answer)
-            elif match(search_answer[index], parse_data):
-                return " ".join(list(search_answer[index].values()))
-            else:
-                return view(search_answer)
-    else:
-        return "Пользователь не существует или данные введены не корректно!"
+    df_iterable = db_manager.get_df_for_search(parse_data).\
+        to_dataframe_iterable()
+    for frame_data in df_iterable:
+        search_answer = frame_data.to_dict(orient="index")
+        if search_answer:
+            for index in search_answer:
+                if len(parse_data['full_name']) != 2:
+                    return view(search_answer)
+                elif match(search_answer[index], parse_data):
+                    return " ".join(list(search_answer[index].values()))
+                else:
+                    return view(search_answer)
+        else:
+            return "Пользователь не существует или данные введены " \
+                   "не корректно!"
 
 
 def view(data: dict) -> str:
