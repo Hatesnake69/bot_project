@@ -166,7 +166,8 @@ async def set_event_time(message: Message, state: FSMContext) -> None:
         async with state.proxy() as data:
             date_and_time = datetime.datetime.strptime(
                 data["event_date"],
-                "%d/%m/%Y")
+                "%d/%m/%Y"
+            )
             time = datetime.timedelta(
                 hours=int(message.text.split(':')[0]),
                 minutes=int(message.text.split(':')[1]))
@@ -177,10 +178,10 @@ async def set_event_time(message: Message, state: FSMContext) -> None:
                 await message.reply("Напиши комментарий.")
             else:
                 await message.reply(
-                    "Время должно быть в формате HH:MI"
+                    "Время должно быть в формате HH:MM"
                     "\nА также не раньше, чем сейчас.")
     else:
-        await message.reply("Время должно быть в формате HH:MI")
+        await message.reply("Время должно быть в формате HH:MM")
 
 
 @dp.message_handler(state=CreateEventForm.event_comment)
