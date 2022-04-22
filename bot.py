@@ -1,4 +1,5 @@
 import logging
+
 import data
 import filters
 import handlers
@@ -8,12 +9,9 @@ from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
 from loader import bot, dp
 from services.scheduler import SCHEDULER
+from utils import logger
 
-logging.basicConfig(
-    filename="logging/bot.log",
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s- %(levelname)s : %(message)s",
-)
+logger = logger.get_logger('bot_log', logging.INFO)
 
 
 async def on_startup(dp: Dispatcher):

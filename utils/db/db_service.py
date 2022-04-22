@@ -8,12 +8,6 @@ from google.oauth2 import service_account
 
 from data import CREDENTIALS_PATH, PROJECT
 
-logging.basicConfig(
-    filename="logging/bot.log",
-    level=logging.ERROR,
-    format="%(asctime)s - %(name)s- %(levelname)s : %(message)s",
-)
-
 
 class DBManager:
     """

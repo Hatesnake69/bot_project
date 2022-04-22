@@ -8,12 +8,6 @@ from states import UnBanUserForm
 from data import cache
 from filters import UserRoleFilter
 
-logging.basicConfig(
-    filename="logging/bot.log",
-    level=logging.ERROR,
-    format="%(asctime)s - %(name)s- %(levelname)s : %(message)s",
-)
-
 
 @dp.message_handler(
     UserRoleFilter(role='admin'),
