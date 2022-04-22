@@ -78,7 +78,6 @@ async def confirmed_call(callback_query: CallbackQuery,
     пользователю предлагается ввести комментарий
 
     """
-    print('ol')
     code = int(callback_query.data[-1])
     async with state.proxy() as data:
         data["is_confirmed"] = bool(code)
