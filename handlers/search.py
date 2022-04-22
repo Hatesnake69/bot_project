@@ -9,11 +9,12 @@ from states.search_states import SearchStates
 from re import compile, fullmatch
 from utils import db
 from aiogram.dispatcher import FSMContext
+from filters import IsRegistered
 
 db_manager = db.DBManager()
 
 
-@dp.message_handler(commands=["search"], state="*")
+@dp.message_handler(IsRegistered(), commands=["search"], state="*")
 async def search_info(message: Message) -> None:
     """
     Обработчик осуществляет приветствие и информирует о
