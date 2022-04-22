@@ -447,7 +447,7 @@ class DBManager(AbstractDBManager):
         except Exception as e:
             logging.error(e)
 
-    def get_users_selaryperiod(
+    def get_users_salaryperiod(
             self,
             salary_period: str
     ) -> bigquery.table.RowIterator:

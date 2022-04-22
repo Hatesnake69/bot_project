@@ -11,8 +11,6 @@ from loader import bot, db_manager, dp
 from services.graph import get_image, get_xlabel_for_graph, get_salary_period
 from states import GraphConfirmForm
 
-TODAY = date.today()
-
 
 def save_graph(df) -> None:
     """
@@ -31,33 +29,32 @@ async def send_graph_to_all() -> None:
     если сообщение было успешно доставлено
 
     """
-    salary_period = get_salary_period(TODAY)
-    df_iterable = db_manager.get_users_selary_period(
+    salary_period = get_salary_period(date.today())
+    df_iterable = db_manager.get_users_salaryperiod(
         salary_period
     ).to_dataframe_iterable()
-    for result in df_iterable:
-        df = result
-    users_id = df.telegram_id.unique()
+    for df in df_iterable:
+        user_ids = df.telegram_id.unique()
 
-    for user_id in users_id:
-        dataframe = df.loc[df.telegram_id == user_id].sort_values(
-             by=['trackdate']
-         )
-        save_graph(dataframe)
-        try:
-            caption = salary_period
-            msg = await bot.send_photo(
-                user_id, open("saved_graph.png", "rb"), caption=caption
-            )
-            message_id = msg.message_id
-            db_manager.send_confirm_for_salaryperiod(
-                 user_id, message_id, datetime.now(), salary_period)
-            state = dp.current_state(user=user_id)
-            await set_keyboard(user_id)
-            async with state.proxy() as data:
-                data["message_id"] = message_id
-        except Exception as e:
-            logging.error(e)
+        for user_id in user_ids:
+            dataframe = df.loc[df.telegram_id == user_id].sort_values(
+                 by=['trackdate']
+             )
+            save_graph(dataframe)
+            try:
+                caption = salary_period
+                msg = await bot.send_photo(
+                    user_id, open("saved_graph.png", "rb"), caption=caption
+                )
+                message_id = msg.message_id
+                db_manager.send_confirm_for_salaryperiod(
+                     user_id, message_id, datetime.now(), salary_period)
+                state = dp.current_state(user=user_id)
+                await set_keyboard(user_id)
+                async with state.proxy() as data:
+                    data["message_id"] = message_id
+            except Exception as e:
+                logging.error(e)
 
 
 async def set_keyboard(user_id: int) -> None:

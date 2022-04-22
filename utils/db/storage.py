@@ -95,7 +95,7 @@ class AbstractDBManager(ABC):
         pass
 
     @abstractmethod
-    def get_users_selaryperiod(
+    def get_users_salaryperiod(
             self,
             salary_period: str
     ) -> bigquery.table.RowIterator:

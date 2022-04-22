@@ -15,16 +15,14 @@ executors = {DEFAULT: AsyncIOExecutor()}
 
 SCHEDULER = AsyncIOScheduler(jobstores=jobstores, executors=executors)
 
-TODAY = date.today()
-
 
 def set_scheduler_for_payday() -> None:
     """
     Формирует задачу планировщика на будний день
 
     """
-    day = TODAY
-    if is_day_off(TODAY):
+    day = date.today()
+    if is_day_off(date.today()):
         while is_day_off(day):
             day += timedelta(days=1)
     SCHEDULER.add_job(send_graph_to_all, "date", run_date=f"{day} 10:00:10")
