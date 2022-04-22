@@ -311,7 +311,7 @@ class DBManager(AbstractDBManager):
         except Exception as e:
             logging.error(e)
 
-    def send_confirm_for_salary_period(
+    def send_confirm_for_salaryperiod(
             self, user_id: int,
             message_id: int,
             mailing_date: datetime,
@@ -367,70 +367,6 @@ class DBManager(AbstractDBManager):
             )
         try:
             self.make_query(query)
-        except Exception as e:
-            logging.error(e)
-
-    def send_confirm_for_salary_period(
-            self, user_id: int,
-            message_id: int,
-            mailing_date: datetime,
-            salary_period: str) -> None:
-        """
-        Функция добавляет в БД данные по зарплатному периоду
-
-        """
-
-        query: str = (
-            f"INSERT INTO handy-digit-312214.TG_Bot_Stager.salary_response"
-            f"(mailing_date, telegram_id, message_id, salary_period)"
-            f"VALUES ('{mailing_date.strftime('%Y-%m-%d %H:%M:%S')}',"
-            f"{user_id}, "
-            f"{message_id},'{salary_period}')"
-        )
-
-        try:
-            bq = bigquery.Client(credentials=self.credentials)
-            result = bq.query(query=query)
-            result.result()
-        except Exception as e:
-            logging.error(e)
-
-    def update_data_for_salaryperiod(
-            self,
-            user_id: int,
-            message_id: int,
-            is_confirmed: bool,
-            response_comment: str,
-            cofirmed_at: datetime
-    ) -> None:
-        """
-        Функция обновляет значения согласовано/не согласовано отработанное
-        время, проставляет время согласования и заполняет поле комментарий,
-        если он есть
-
-        """
-        if response_comment:
-            query: str = (
-                f"UPDATE handy-digit-312214.TG_Bot_Stager.salary_response "
-                f"SET is_confirmed = {is_confirmed},"
-                f"response_comment = '{response_comment}',"
-                f"confirmed_at = '{cofirmed_at.strftime('%Y-%m-%d %H:%M:%S')}'"
-                f"WHERE telegram_id = {user_id} "
-                f"AND message_id = {message_id}"
-            )
-
-        else:
-            query: str = (
-                f"UPDATE handy-digit-312214.TG_Bot_Stager.salary_response "
-                f"SET is_confirmed = {is_confirmed}, "
-                f"confirmed_at = '{cofirmed_at.strftime('%Y-%m-%d %H:%M:%S')}'"
-                f"WHERE telegram_id = {user_id} "
-                f"AND message_id = {message_id}"
-            )
-
-        try:
-            query_job = self.bqclient.query(query)
-            query_job.result()
         except Exception as e:
             logging.error(e)
 
