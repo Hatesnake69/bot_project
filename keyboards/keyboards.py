@@ -74,3 +74,8 @@ org_keyboard = InlineKeyboardMarkup(row_width=1).add(org1, bck)
 oth_keyboard = InlineKeyboardMarkup(row_width=1).add(oth1, bck)
 acc_keyboard = InlineKeyboardMarkup(row_width=1).add(acc1, acc2, bck)
 tech_keyboard = InlineKeyboardMarkup(row_width=1).add(tech1, tech2, tech3, bck)
+
+confirmed_kb = InlineKeyboardMarkup(row_width=2)
+accept = InlineKeyboardButton(text="Согласиться", callback_data='kb1')
+refuse = InlineKeyboardButton(text="Отказаться", callback_data='kb0')
+confirmed_kb.add(accept, refuse)

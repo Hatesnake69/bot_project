@@ -8,7 +8,7 @@ from aiogram_calendar import SimpleCalendar, simple_cal_callback
 from data import CHAT_ID
 from filters import IsRegistered
 from loader import dp
-from services.scheduler import set_scheduler
+from services.set_scheduler import set_scheduler_event
 from states import CreateEventForm
 
 start_kb = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -251,7 +251,7 @@ async def set_event_confirm(message: Message, state: FSMContext) -> None:
                     user_id = message.from_user.id
                 else:
                     user_id = int(CHAT_ID)
-                set_scheduler(
+                set_scheduler_event(
                     user_id,
                     data["event_name"],
                     data["event_date"],

@@ -4,7 +4,7 @@ from aiogram.types import Message, ReplyKeyboardMarkup, ReplyKeyboardRemove
 
 from filters import IsRegistered
 from loader import db_manager, dp
-from services.graph import get_image, get_xlabel_for_graph
+from services.func_scheduler import save_graph
 from states import DetailsJobForm
 
 
@@ -51,8 +51,7 @@ async def send_graph(message: Message, state: FSMContext) -> None:
     ).to_dataframe_iterable()
     for df in df_iterable:
         if not df.empty:
-            labels = get_xlabel_for_graph(df)
-            get_image(df, labels)
+            save_graph(df)
             await message.bot.send_photo(
                 message.chat.id, open("saved_graph.png", "rb"),
                 caption=message.text, reply_markup=ReplyKeyboardRemove()

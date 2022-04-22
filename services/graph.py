@@ -1,21 +1,20 @@
+import pandas.core.series
 from matplotlib.pyplot import figure, savefig
 from numpy import arange
 from pandas import DataFrame, date_range, to_datetime
 from seaborn import histplot
 
-from loader import db_manager
 
-
-def get_salary_period(today):
+def get_salary_period(today) -> str:
     """
     Формирует строку зарплатного периода
 
-    :param today: день для определения зарплатного периода
-    :type today: datetime.date
+        :param today: день для определения зарплатного периода
+        :type today: datetime.date
 
     """
 
-    DAY_OF_WEEK = {
+    MONTH = {
         1: "Январь",
         2: "Февраль",
         3: "Март",
@@ -35,62 +34,48 @@ def get_salary_period(today):
     year = today.strftime("%y")
 
     if day < 6 or day > 20:
-        salary_period = f"Аванс-{DAY_OF_WEEK[month]}{year}"
+        salary_period = f"ЗП-{MONTH[month]}{year}"
         return salary_period
     else:
-        salary_period = (
-            f"ЗП-" f"{DAY_OF_WEEK[month - 1 if month - 1 != 0 else 12]}"
-            f"{year}"
-        )
+        salary_period = f"Аванс-{MONTH[month]}{year}"
         return salary_period
 
 
-def get_dataframe_for_graph(user_id, date):
-    """
-    Формирует Dataframe через запрос к БД
-
-     :param user_id: id пользователя
-     :type user_id: int
-
-     :param date: дата составления графика
-     :type date: datetime.date
-
-    """
-    salary_period = get_salary_period(date)
-
-    return db_manager.get_df_for_graph(user_id, salary_period)
-
-
-def get_xlabel_for_graph(df):
+def get_xlabel_for_graph(df: [DataFrame]) -> DataFrame:
     """
     Формирует Dataframe дат и возвращает столбец дата(день недели)
 
-     :param df: Dataframe из БД
-     :type df: pandas.core.frame.DataFrame
-
+        :param df: Dataframe из БД
+        :type df: pandas.core.frame.DataFrame
 
     """
 
     DAY_OF_WEEK = {
-        0: "ПН", 1: "ВТ", 2: "СР", 3: "ЧТ", 4: "ПТ", 5: "СБ", 6: "ВС"
+        0: "ПН",
+        1: "ВТ",
+        2: "СР",
+        3: "ЧТ",
+        4: "ПТ",
+        5: "СБ",
+        6: "ВС"
     }
 
     set_date = set(df["trackdate"])
     df_xlabel = DataFrame(
         {"trackdate": date_range(start=min(set_date), end=max(set_date))}
     )
-    df_xlabel["dayOfWeek"] = to_datetime(df_xlabel.trackdate).dt.dayofweek.\
-        map(
+    df_xlabel["dayOfWeek"] = to_datetime(df_xlabel.trackdate).dt.dayofweek.map(
         DAY_OF_WEEK
     )
     df_xlabel["xticklabels"] = (
-        df_xlabel["trackdate"].astype(str) + "(" + df_xlabel.dayOfWeek + ")"
+            df_xlabel["trackdate"].astype(
+                str) + "(" + df_xlabel.dayOfWeek + ")"
     )
 
     return df_xlabel.xticklabels
 
 
-def get_image(df, xlabel):
+def get_image(df: DataFrame, xlabel: [pandas.core.series.Series]) -> None:
     """
     Формирует и сохраняет картинку с графиком
 

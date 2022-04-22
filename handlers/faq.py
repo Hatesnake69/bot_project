@@ -1,13 +1,8 @@
 from aiogram.types import CallbackQuery, Message
-from google.oauth2 import service_account
 
 import keyboards as key
-from data import CREDENTIALS_PATH
 from filters import IsRegistered
 from loader import bot, dp
-
-credentials = service_account.Credentials. \
-    from_service_account_file(CREDENTIALS_PATH)
 
 
 async def send_keyboard(call, keyboard):
