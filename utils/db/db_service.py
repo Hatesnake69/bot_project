@@ -201,14 +201,15 @@ class DBManager(AbstractDBManager):
                         user_id:
                         int, message_text: str,
                         planned_at: datetime,
-                        created_at: datetime):
+                        created_at: datetime) \
+            -> bigquery.table.RowIterator or bool:
         """
         Отправляет данные о событии в хранилище BigQuery
-
         :param user_id: id пользователя
         :param message_text: текст дл напоминания
         :param planned_at: дата события
         :param created_at: время создания
+        :rtype: bigquery.table.RowIterator or bool
         """
 
         query: str = (
@@ -224,12 +225,13 @@ class DBManager(AbstractDBManager):
             logging.error(e)
             return False
 
-    def get_reminder_text(self, planned_at: datetime):
+    def get_reminder_text(self, planned_at: datetime) -> list:
 
         """
         Функция выгружает из БД сообщение напоминание
 
         :param planned_at: дата события
+        :rtype: list
         """
 
         query: str = (
@@ -295,12 +297,13 @@ class DBManager(AbstractDBManager):
         except Exception as e:
             logging.error(e)
 
-    def get_df_for_faq(self, faq_key):
+    def get_df_for_faq(self, faq_key) -> list:
         """
         Функция выгружает из БД ответ по ключу FAQ и
         возвращает в строковом виде
 
         :param faq_key: ключ записи
+        :rtype: list
         """
 
         query: str = (f"SELECT * FROM "
@@ -308,6 +311,32 @@ class DBManager(AbstractDBManager):
                       f"WHERE key ='{faq_key}'")
         try:
             return list(self.make_query(query))[0][3]
+        except Exception as e:
+            logging.error(e)
+
+    def get_quest_faq(self, faq_category, user_id) \
+            -> bigquery.table.RowIterator:
+        """
+        Функция выгружает из БД вопросы по
+        категории и индентификатору пользователя,
+        возвращает список
+
+        :param faq_category: категории вопросов
+        :param user_id: идентификатор пользователя
+
+        :rtype: bigquery.table.RowIterator
+        """
+        query: str = (f"SELECT question, role, key "
+                      f"FROM handy-digit-312214.TG_Bot_Stager.faq_datas "
+                      f"WHERE key LIKE '{faq_category}%' "
+                      f"AND (role LIKE CONCAT('%', (SELECT role "
+                      f"FROM handy-digit-312214.TG_Bot_Stager.users "
+                      f"WHERE telegram_id ={user_id}), '%') "
+                      f"OR role = 'common')")
+
+        try:
+            result = self.bqclient.query(query=query)
+            return result.result()
         except Exception as e:
             logging.error(e)
 

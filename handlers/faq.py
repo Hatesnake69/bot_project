@@ -2,18 +2,19 @@ from aiogram.types import CallbackQuery, Message
 
 import keyboards as key
 from filters import IsRegistered
-from loader import bot, dp
+from loader import dp
 
 
-async def send_keyboard(call, keyboard):
+async def send_keyboard(faq_category, call):
     """
     Удаляет прежнее сообщение и выводит выбранное меню вопросов
     :param call: объект CallbackQuery
-    :param keyboard: выбранное меню
+    :param faq_category: категория вопроса
     """
+    keyboard = key.collect_keyboard(faq_category, call.from_user.id, key.bck)
 
-    await bot.delete_message(chat_id=call.from_user.id,
-                             message_id=call.message.message_id)
+    await call.message.delete()
+
     await call.message.answer("Выберите вопрос: ",
                               reply_markup=keyboard)
 
@@ -38,7 +39,7 @@ async def fin_questions(call: CallbackQuery):
     :param call: объект CallbackQuery
     """
 
-    await send_keyboard(call, key.fin_keyboard)
+    await send_keyboard('FIN', call)
 
 
 @dp.callback_query_handler(text=key.FaqKeyboard.ORG_STR.value)
@@ -48,7 +49,7 @@ async def org_questions(call: CallbackQuery):
     :param call: объект CallbackQuery
     """
 
-    await send_keyboard(call, key.org_keyboard)
+    await send_keyboard('ORG', call)
 
 
 @dp.callback_query_handler(text=key.FaqKeyboard.OT_STR.value)
@@ -58,7 +59,7 @@ async def oth_questions(call: CallbackQuery):
     :param call: объект CallbackQuery
     """
 
-    await send_keyboard(call, key.oth_keyboard)
+    await send_keyboard('ANO', call)
 
 
 @dp.callback_query_handler(text=key.FaqKeyboard.ACC_STR.value)
@@ -68,7 +69,7 @@ async def acc_questions(call: CallbackQuery):
     :param call: объект CallbackQuery
     """
 
-    await send_keyboard(call, key.acc_keyboard)
+    await send_keyboard('ACC', call)
 
 
 @dp.callback_query_handler(text=key.FaqKeyboard.TECH_STR.value)
@@ -78,7 +79,7 @@ async def tech_questions(call: CallbackQuery):
     :param call: объект CallbackQuery
     """
 
-    await send_keyboard(call, key.tech_keyboard)
+    await send_keyboard('TDP', call)
 
 
 @dp.callback_query_handler(text=key.FaqKeyboard.BCK_STR.value)
@@ -87,5 +88,18 @@ async def bck_to_category(call: CallbackQuery):
     Выводит стартовое меню категорий
     :param call: объект CallbackQuery
     """
+    await call.message.delete()
 
-    await send_keyboard(call, key.category_kb)
+    await call.message.answer("Выберите раздел: ",
+                              reply_markup=key.category_kb)
+
+
+@dp.callback_query_handler(text=key.FaqKeyboard.UP_STR.value)
+async def up_to_category(call: CallbackQuery):
+    """
+    Выводит стартовое меню категорий
+    :param call: объект CallbackQuery
+    """
+
+    await call.message.answer("Выберите раздел: ",
+                              reply_markup=key.category_kb)

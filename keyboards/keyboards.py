@@ -2,8 +2,25 @@ import enum
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+from loader import db_manager
+
 
 class FaqKeyboard(str, enum.Enum):
+    """
+    Данный класс содержит аргументы для формирования
+    клавиатуры с категорией вопросов
+
+    Args:
+    FWD_STR: кнопка вперёд
+    BCK_STR: кнопка назад
+    UP_STR: кнопка на стартовое меню
+    FIN_STR: категория Финансы
+    ORG_STR: категория Организация
+    OT_STR: категория Прочие
+    TECH_STR: категория Тех часть
+    ACC_STR: категория Бухгалтерия
+    """
+
     FWD_STR = "➡️️"
     BCK_STR = "⬅️"
     UP_STR = "Назад ↩️"
@@ -16,7 +33,7 @@ class FaqKeyboard(str, enum.Enum):
     FIN_Q2_STR = "Какие треки идут в зарплату?"
     FIN_Q4_STR = "Когда ждать аванс?"
     FIN_Q3_STR = "Когда ждать зарплату?"
-    FIN_Q5_STR = "Неверная инфо в отчёте Data Studio"
+    FIN_Q5_STR = "Неверная инфо в Data Studio"
     ORG_Q1_STR = "Хочу оформить отпуск"
     OTH_Q1_STR = "Простои, хочу задачи на обучение"
     TECH_Q1_STR = "Хочу получить надбавку"
@@ -24,6 +41,34 @@ class FaqKeyboard(str, enum.Enum):
     TECH_Q3_STR = "Есть ли у нас система грейдов?"
     ACC_Q1_STR = "Мне нужна справка 2НДФЛ"
     ACC_Q2_STR = "Когда придут отпускные?"
+
+
+def collect_keyboard(faq_category: str,
+                     user_id: int,
+                     bck_button: InlineKeyboardButton) \
+        -> InlineKeyboardMarkup:
+    """
+    Функция формирует и возвращает клавиатуру из
+    полученных из BQ данных, отфильтрованных по
+    категории вопросов и user_id,
+
+    :param faq_category: категория вопросов
+    :type user_id: идентификатор пользователя
+    :type bck_button: объект InlineKeyboardButton
+
+    :rtype: объект InlineKeyboardMarkup
+    """
+
+    selected_kb = InlineKeyboardMarkup(row_width=1)
+    filtered_questions = db_manager.get_quest_faq(faq_category, user_id)
+
+    for question in filtered_questions:
+        button = InlineKeyboardButton(text=question[0],
+                                      callback_data=question[0])
+        selected_kb.add(button)
+
+    selected_kb.add(bck_button)
+    return selected_kb
 
 
 fwd = InlineKeyboardButton(text=FaqKeyboard.FWD_STR,
@@ -42,40 +87,10 @@ tech = InlineKeyboardButton(text=FaqKeyboard.TECH_STR,
                             callback_data=FaqKeyboard.TECH_STR)
 acc = InlineKeyboardButton(text=FaqKeyboard.ACC_STR,
                            callback_data=FaqKeyboard.ACC_STR)
-org1 = InlineKeyboardButton(text=FaqKeyboard.ORG_Q1_STR,
-                            callback_data=FaqKeyboard.ORG_Q1_STR)
-fin1 = InlineKeyboardButton(text=FaqKeyboard.FIN_Q1_STR,
-                            callback_data=FaqKeyboard.FIN_Q1_STR)
-fin2 = InlineKeyboardButton(text=FaqKeyboard.FIN_Q2_STR,
-                            callback_data=FaqKeyboard.FIN_Q2_STR)
-fin3 = InlineKeyboardButton(text=FaqKeyboard.FIN_Q3_STR,
-                            callback_data=FaqKeyboard.FIN_Q3_STR)
-fin4 = InlineKeyboardButton(text=FaqKeyboard.FIN_Q4_STR,
-                            callback_data=FaqKeyboard.FIN_Q4_STR)
-fin6 = InlineKeyboardButton(text=FaqKeyboard.FIN_Q5_STR,
-                            callback_data=FaqKeyboard.FIN_Q5_STR)
-oth1 = InlineKeyboardButton(text=FaqKeyboard.OTH_Q1_STR,
-                            callback_data=FaqKeyboard.OTH_Q1_STR)
-tech1 = InlineKeyboardButton(text=FaqKeyboard.TECH_Q1_STR,
-                             callback_data=FaqKeyboard.TECH_Q1_STR)
-tech2 = InlineKeyboardButton(text=FaqKeyboard.TECH_Q2_STR,
-                             callback_data=FaqKeyboard.TECH_Q2_STR)
-tech3 = InlineKeyboardButton(text=FaqKeyboard.TECH_Q3_STR,
-                             callback_data=FaqKeyboard.TECH_Q3_STR)
-acc1 = InlineKeyboardButton(text=FaqKeyboard.ACC_Q1_STR,
-                            callback_data=FaqKeyboard.ACC_Q1_STR)
-acc2 = InlineKeyboardButton(text=FaqKeyboard.ACC_Q2_STR,
-                            callback_data=FaqKeyboard.ACC_Q2_STR)
 
-category_kb = InlineKeyboardMarkup(row_width=1).add(fin, org, acc, tech, oth)
-fin_keyboard = InlineKeyboardMarkup(row_width=1).add(fin1, fin2,
-                                                     fin3, fin4, fin6, bck)
-org_keyboard = InlineKeyboardMarkup(row_width=1).add(org1, bck)
-oth_keyboard = InlineKeyboardMarkup(row_width=1).add(oth1, bck)
-acc_keyboard = InlineKeyboardMarkup(row_width=1).add(acc1, acc2, bck)
-tech_keyboard = InlineKeyboardMarkup(row_width=1).add(tech1, tech2, tech3, bck)
-
-confirmed_kb = InlineKeyboardMarkup(row_width=2)
 accept = InlineKeyboardButton(text="Согласиться", callback_data='kb1')
 refuse = InlineKeyboardButton(text="Отказаться", callback_data='kb0')
-confirmed_kb.add(accept, refuse)
+
+category_kb = InlineKeyboardMarkup(row_width=1).add(fin, org, acc, tech, oth)
+up_kb = InlineKeyboardMarkup(row_width=1).add(up)
+confirmed_kb = InlineKeyboardMarkup(row_width=2).add(accept, refuse)
