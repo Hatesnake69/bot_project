@@ -1,4 +1,3 @@
-
 from aiogram.types import CallbackQuery
 
 import keyboards as key
@@ -18,7 +17,8 @@ async def get_reply(call: CallbackQuery,
                          user=call.message.from_user.username,
                          data=call.message.text)
 
-    await call.message.answer(db_manager.get_df_for_faq(faq_key))
+    await call.message.answer(db_manager.get_df_for_faq(faq_key),
+                              reply_markup=key.up_kb)
 
 
 async def send_message(call, text_button):
@@ -31,6 +31,7 @@ async def send_message(call, text_button):
     await bot.delete_message(chat_id=call.from_user.id,
                              message_id=call.message.message_id)
     await call.message.answer(text=text_button)
+    # await call.message.answer(reply_markup=key.up_kb)
 
 
 @dp.callback_query_handler(text=key.FaqKeyboard.FIN_Q2_STR.value)
