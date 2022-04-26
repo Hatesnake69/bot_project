@@ -5,13 +5,17 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardMarkup
 from aiogram.utils.markdown import text
 from aiogram_calendar import SimpleCalendar, simple_cal_callback
-from data import CHAT_ID
+from utils.logger import get_logger
 from filters import IsRegistered
 from loader import dp
 from services.set_scheduler import set_scheduler_event
 from states import CreateEventForm
+from loader import db_manager as manager
+from loader import bot
 
 start_kb = ReplyKeyboardMarkup(resize_keyboard=True)
+
+log = get_logger(__name__)
 
 
 @dp.message_handler(
@@ -30,10 +34,7 @@ async def create_event_start(message: Message) -> None:
                         "/f для введения текста события целиком")
 
 
-@dp.message_handler(
-    IsRegistered(),
-    commands=["f"],
-    state="*")
+@dp.message_handler(IsRegistered(),  commands=["f"],  state="*")
 async def parse_event_start(message: Message) -> None:
     """
     Срабатывает на команду /f и выводит сообщение с
@@ -112,11 +113,13 @@ async def set_event_name(message: Message, state: FSMContext) -> None:
 
 @dp.callback_query_handler(
     simple_cal_callback.filter(),
-    state=CreateEventForm.event_date)
+    state=CreateEventForm.event_date
+)
 async def set_event_date(
         callback_query: CallbackQuery,
         callback_data,
-        state: FSMContext) -> None:
+        state: FSMContext
+) -> None:
     """
     Перехватывает событие нажимания на кнопку
     даты из календарика со стейтом event_date
@@ -128,17 +131,19 @@ async def set_event_date(
     :param state: стейт
     """
     selected, date = await SimpleCalendar().process_selection(
-        callback_query, callback_data)
+        callback_query,
+        callback_data
+    )
 
     if selected and date_check(date):
         await callback_query.message.answer(
             f'Вы выбрали: {date.strftime("%d/%m/%Y")}',
         )
         await callback_query.message.answer(
-            "Укажите время события в формате HH:MI"
+            "Укажите время события в формате HH:MM"
         )
         async with state.proxy() as data:
-            data["event_date"] = f'{date.strftime("%d/%m/%Y")}'
+            data["event_date"] = f"{date:%d/%m/%Y}"
 
         await CreateEventForm.next()
 
@@ -248,17 +253,31 @@ async def set_event_confirm(message: Message, state: FSMContext) -> None:
         async with state.proxy() as data:
             if message.text.lower() == "да":
                 await message.reply("Событие создано")
-                if data["event_status"] == "Персональное событие":
+                if data.get(
+                        value="event_status",
+                        default=None
+                ) == "Персональное событие":
                     user_id = message.from_user.id
+                    set_scheduler_event(
+                        user_id=user_id,
+                        event=data["event_name"],
+                        event_date=data["event_date"],
+                        event_time=data["event_time"],
+                        comment=data["event_comment"],
+                    )
                 else:
-                    user_id = int(CHAT_ID)
-                set_scheduler_event(
-                    user_id,
-                    data["event_name"],
-                    data["event_date"],
-                    data["event_time"],
-                    data["event_comment"],
-                )
+                    chat_id = message.chat.id
+                    list_of_chat_users = await form_list_of_chat_users(
+                        chat_id=chat_id
+                    )
+                    for i_user in list_of_chat_users:
+                        set_scheduler_event(
+                            user_id=i_user,
+                            event=data["event_name"],
+                            event_date=data["event_date"],
+                            event_time=data["event_time"],
+                            comment=data["event_comment"],
+                        )
             else:
                 await message.reply("Событие не создано")
         await state.finish()
@@ -276,3 +295,27 @@ def date_check(date: datetime) -> bool:
         return date.date() >= date_now.date()
     else:
         return date > date_now
+
+
+async def form_list_of_chat_users(chat_id: int) -> list:
+    """
+    Функция формирует список из зарегистрированных в боте сотрудников,
+    которые находятся в передаваемом чат-канале
+    :param chat_id: айди канала
+    :type chat_id: int
+    :rtype: list
+    """
+
+    list_of_reg_users: list = manager.get_user_id_list()
+    list_of_chat_users: list = []
+    for i_user in list_of_reg_users:
+        try:
+            user_status = await bot.get_chat_member(
+                chat_id=chat_id,
+                user_id=int(i_user[0])
+            )
+            if user_status['status'] != 'left':
+                list_of_chat_users.append(i_user[0])
+        except Exception as e:
+            log.error(e)
+    return list_of_chat_users

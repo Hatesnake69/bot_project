@@ -26,7 +26,7 @@ class UserRoleFilter(BoundFilter):
             return is_reg_flag
 
         except KeyError:
-            correct = db_manager.check_user_role(
+            correct = await db_manager.check_user_role(
                 message=message,
                 role=self.role
             )
