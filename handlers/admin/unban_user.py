@@ -1,12 +1,12 @@
 import logging
 
-from aiogram.types import Message
 from aiogram.dispatcher import FSMContext
+from aiogram.types import Message
 
-from loader import dp, db_manager
-from states import UnBanUserForm
 from data import cache
 from filters import UserRoleFilter
+from loader import db_manager, dp
+from states import UnBanUserForm
 
 
 @dp.message_handler(
