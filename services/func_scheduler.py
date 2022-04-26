@@ -4,20 +4,19 @@ from datetime import date, datetime
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-
 from data import CHAT_ID
 from keyboards import confirmed_kb
 from loader import bot, db_manager, dp
-from services.graph import get_image, get_xlabel_for_graph, get_salary_period
+from services.graph import get_image, get_salary_period, get_xlabel_for_graph
 from states import GraphConfirmForm
 
 
 def save_graph(df) -> None:
     """
-    Функция принимает DataFrame, формирует ось Х и сохраняет график
-    :param df: DataFrame пользователя по зарплатномку периоду
-    :type df: DataFrame
+    Функция принимает DataFrame, формирует ось Х и сохраняет график.
 
+    :param df: DataFrame пользователя по зарплатному периоду
+    :type df: DataFrame
     """
     labels = get_xlabel_for_graph(df)
     get_image(df, labels)
@@ -25,9 +24,8 @@ def save_graph(df) -> None:
 
 async def send_graph_to_all() -> None:
     """
-    Отправляет график пользователю и делает отмеку в БД,
-    если сообщение было успешно доставлено
-
+    Отправляет график пользователю и делает отметку в БД,
+    если сообщение было успешно доставлено.
     """
     salary_period = get_salary_period(date.today())
     df_iterable = db_manager.get_users_salaryperiod(
@@ -59,8 +57,7 @@ async def send_graph_to_all() -> None:
 
 async def set_keyboard(user_id: int) -> None:
     """
-    Функция устанвливает две кнопки Согласиться/Отклонить
-
+    Функция устанавливает две кнопки "согласиться/отклонить".
     """
     await bot.send_message(user_id, text="Подтвердить часы",
                            reply_markup=confirmed_kb)
@@ -70,10 +67,9 @@ async def set_keyboard(user_id: int) -> None:
 async def confirmed_call(callback_query: CallbackQuery,
                          state: FSMContext) -> None:
     """
-    Функция определяет нажаую кнокпку и в случае, если пользователь нажал на
-    кнопку Согласится, его ответ загружается в БД, в противном случае
-    пользователю предлагается ввести комментарий
-
+    Функция определяет нажатую кнопку и в случае, если пользователь нажал на
+    кнопку "согласиться", его ответ загружается в БД, в противном случае
+    пользователю предлагается ввести комментарий.
     """
     code = int(callback_query.data[-1])
     async with state.proxy() as data:
@@ -111,7 +107,7 @@ async def confirmed_call(callback_query: CallbackQuery,
 @dp.message_handler(state=GraphConfirmForm.comment_to_graph)
 async def send_confirmed_to_db(message: Message, state: FSMContext) -> None:
     """
-    Функция принимает комментарий  и загружает ответ в БД
+    Функция принимает комментарий и загружает ответ в БД.
     """
     async with state.proxy() as data:
         data["response_comment"] = message.text
@@ -132,7 +128,7 @@ async def send_confirmed_to_db(message: Message, state: FSMContext) -> None:
 
 async def send_reminder_to_user(user_id: int, planned_at: datetime) -> None:
     """
-    Отправляет напоминание пользователю
+    Отправляет напоминание пользователю.
 
     :param user_id: id пользователя
     :param planned_at: дата события
@@ -141,8 +137,7 @@ async def send_reminder_to_user(user_id: int, planned_at: datetime) -> None:
     reminder_text = db_manager.get_reminder_text(planned_at)
 
     for row in reminder_text:
-        if CHAT_ID:
-            if user_id == int(CHAT_ID):
-                for telegram_id in db_manager.get_user_id_list():
-                    await bot.send_message(telegram_id, text=row[1])
+        if CHAT_ID and user_id == int(CHAT_ID):
+            for telegram_id in db_manager.get_user_id_list():
+                await bot.send_message(telegram_id, text=row[1])
         await bot.send_message(row[0], text=row[1])

@@ -1,12 +1,11 @@
 import logging
 
-from aiogram.types import Message
 from aiogram.dispatcher import FSMContext
+from aiogram.types import Message
 
-from loader import dp, db_manager, bot
-from states import AdminMessageStates
 from filters import UserRoleFilter
-
+from loader import bot, db_manager, dp
+from states import AdminMessageStates
 
 logging.basicConfig(
     filename="logging/bot.log",
