@@ -24,9 +24,16 @@ CREDENTIALS_PATH: str = getenv("CREDENTIALS_PATH")  # BigQuery
 PROJECT: str = getenv("PROJECT")  # BigQuery
 TIMEZONE: str = getenv("TIMEZONE")
 CHAT_ID: int = getenv("CHAT_ID")
+TIME_TO_LIVE_DATA = getenv("TIME_TO_LIVE_DATA")
+TIME_TO_LIVE_STATE = getenv("TIME_TO_LIVE_STATE")
 
 
-cache = RedisStorage2(host=REDIS_HOST, port=int(REDIS_PORT))
+cache = RedisStorage2(
+    host=REDIS_HOST,
+    port=int(REDIS_PORT),
+    data_ttl=TIME_TO_LIVE_DATA,
+    state_ttl=TIME_TO_LIVE_STATE
+)
 webhook_url = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
 
 DEFAULT = "default"
