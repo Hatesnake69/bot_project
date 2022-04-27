@@ -43,7 +43,7 @@ async def search_response(message: Message) -> None:
         await message.answer(parse_data)
     else:
         await message.answer(users_search(parse_data))
-    await message.answer("Хотите продолжить поиск?")
+    await message.answer("Хотите продолжить поиск? (да/нет)")
     await SearchStates.AFTER_SEARCH_PROCESS.set()
 
 
