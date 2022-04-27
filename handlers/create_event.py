@@ -5,13 +5,14 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardMarkup
 from aiogram.utils.markdown import text
 from aiogram_calendar import SimpleCalendar, simple_cal_callback
-from utils.logger import get_logger
+
 from filters import IsRegistered
+from loader import bot
+from loader import db_manager as manager
 from loader import dp
 from services.set_scheduler import set_scheduler_event
 from states import CreateEventForm
-from loader import db_manager as manager
-from loader import bot
+from utils import get_logger
 
 start_kb = ReplyKeyboardMarkup(resize_keyboard=True)
 

@@ -59,8 +59,11 @@ async def set_keyboard(user_id: int) -> None:
     """
     Функция устанавливает две кнопки "согласиться/отклонить".
     """
-    await bot.send_message(user_id, text="Подтвердить часы",
-                           reply_markup=confirmed_kb)
+    await bot.send_message(
+        chat_id=user_id,
+        text="Подтвердить часы",
+        reply_markup=confirmed_kb,
+    )
 
 
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith("kb"))
@@ -71,10 +74,9 @@ async def confirmed_call(callback_query: CallbackQuery,
     кнопку "согласиться", его ответ загружается в БД, в противном случае
     пользователю предлагается ввести комментарий.
     """
-    code = int(callback_query.data[-1])
+    code: int = int(callback_query.data[-1])
     async with state.proxy() as data:
         data["is_confirmed"] = bool(code)
-        print(data["is_confirmed"])
     if code:
 
         try:

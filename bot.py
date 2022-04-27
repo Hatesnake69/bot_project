@@ -9,9 +9,9 @@ import handlers
 import middlewares
 from loader import bot, dp
 from services.set_scheduler import SCHEDULER
-from utils import logger
+from utils import get_logger
 
-logger = logger.get_logger('bot_log', logging.INFO)
+logger = get_logger('bot_log', logging.INFO)
 
 
 async def on_startup(dp: Dispatcher):

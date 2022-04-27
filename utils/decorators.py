@@ -1,10 +1,6 @@
-import logging
+from utils import get_logger
 
-logging.basicConfig(
-    filename="logging/bot.log",
-    level=logging.ERROR,
-    format="%(asctime)s - %(name)s- %(levelname)s : %(message)s",
-)
+logger = get_logger(__name__)
 
 
 def bq_error_handler(func):
@@ -12,8 +8,10 @@ def bq_error_handler(func):
         try:
             return await func(*args, **kwargs)
         except Exception as e:
-            logging.error(e)
-            await kwargs["message"].answer("Произошла непредвиденная ошибка, "
-                                           "свяжитесь с администратором!")
+            logger.error(e)
+            await kwargs["message"].answer(
+                text=("Произошла непредвиденная ошибка, "
+                      "свяжитесь с администратором!")
+            )
             await kwargs["state"].finish()
     return wrapper
