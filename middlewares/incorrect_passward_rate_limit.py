@@ -15,7 +15,7 @@ class ThrottlingMiddleware(BaseMiddleware):
     async def on_process_message(
             self,
             message: types.Message,
-            data: dict
+            data: dict,
     ) -> None:
         """
         This handler is called when dispatcher receives a message
