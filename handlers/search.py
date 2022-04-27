@@ -10,9 +10,10 @@ from aiogram.types import Message
 
 from loader import db_manager, dp
 from states.search_states import SearchStates
+from filters import IsRegistered
 
 
-@dp.message_handler(commands=["search"], state="*")
+@dp.message_handler(IsRegistered(), commands=["search"], state="*")
 async def search_info(message: Message) -> None:
     """
     Обработчик осуществляет приветствие и информирует о
