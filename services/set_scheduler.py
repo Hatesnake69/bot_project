@@ -48,8 +48,8 @@ def set_scheduler_event(
         f"Напоминание! Сегодня {event} в {event_time}: {comment}"
     )
     event_date: datetime = datetime.strptime(
-        date_string=f"{event_date} {event_time}",
-        format="%d/%m/%Y %H:%M",
+        f"{event_date} {event_time}",
+        "%d/%m/%Y %H:%M",
     )
     reminder_time = event_date - timedelta(minutes=1)
     created_at = datetime.now()

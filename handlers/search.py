@@ -10,9 +10,10 @@ from aiogram.types import Message
 
 from loader import db_manager, dp
 from states.search_states import SearchStates
+from filters import IsRegistered
 
 
-@dp.message_handler(commands=["search"], state="*")
+@dp.message_handler(IsRegistered(), commands=["search"], state="*")
 async def search_info(message: Message) -> None:
     """
     Обработчик осуществляет приветствие и информирует о
@@ -42,7 +43,7 @@ async def search_response(message: Message) -> None:
         await message.answer(parse_data)
     else:
         await message.answer(users_search(parse_data))
-    await message.answer("Хотите продолжить поиск?")
+    await message.answer("Хотите продолжить поиск? (да/нет)")
     await SearchStates.AFTER_SEARCH_PROCESS.set()
 
 
