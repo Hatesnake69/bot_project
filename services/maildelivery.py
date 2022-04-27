@@ -4,13 +4,15 @@ from email.mime.text import MIMEText
 from smtplib import SMTP, SMTPDataError
 
 from data.config import FROM_EMAIL, PASSWORD
+from utils import get_logger
+
+logger = get_logger(__name__)
 
 
-def sending_message(to_email, secret_key) -> str:
+def sending_message(to_email: str, secret_key: str) -> None:
     """
     Функция отправляет письмо на почту пользователю,
-    которую он ввел в чат боте. В случае ошибки возвращает
-    строк "Шаблон не найден"
+    которую он ввел в чат боте.
 
     :param to_email: электронная почта
     :type to_email: str
@@ -21,17 +23,15 @@ def sending_message(to_email, secret_key) -> str:
     :rtype: str
     """
     try:
-
-        with open("services/index.html", "r") as file:
-            template_old = file.read()
+        with open(file="services/index.html", mode="r") as mail_template:
+            template_old = mail_template.read()
             template_new = re.sub(
-                r"Проверочный код \w+",
-                f"{secret_key}", template_old
+                r"Проверочный код \w+", secret_key, template_old
             )
             with open("index.html", "w") as f:
                 f.write(template_new)
     except IOError:
-        return "Шаблон не найден"
+        logger.error("Шаблон не найден")
 
     try:
         msg = MIMEMultipart()
@@ -39,11 +39,11 @@ def sending_message(to_email, secret_key) -> str:
         msg["To"] = to_email
         msg["Subject"] = "Регистрация"
         msg.attach(MIMEText(template_new, "html"))
-        server = SMTP("smtp.yandex.ru", 587)
+        server = SMTP(host="smtp.yandex.ru", port=587)
         server.set_debuglevel(False)
         server.starttls()
-        server.login(FROM_EMAIL, PASSWORD)
-        server.send_message(msg)
+        server.login(user=FROM_EMAIL, password=PASSWORD)
+        server.send_message(msg=msg)
         server.quit()
     except SMTPDataError:
         pass

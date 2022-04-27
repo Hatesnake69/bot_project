@@ -17,14 +17,10 @@ SCHEDULER = AsyncIOScheduler(jobstores=jobstores, executors=executors)
 
 
 def set_scheduler_for_payday() -> None:
-    """
-    Формирует задачу планировщика на будний день
-
-    """
-    day = date.today()
-    if is_day_off(date.today()):
-        while is_day_off(day):
-            day += timedelta(days=1)
+    """Формирует задачу планировщика на будний день."""
+    day: date = date.today()
+    while is_day_off(date=day):
+        day += timedelta(days=1)
     SCHEDULER.add_job(send_graph_to_all, "date", run_date=f"{day} 10:00:10")
 
 
@@ -40,7 +36,7 @@ def set_scheduler_event(
 ):
     """
     Формирует задачу в планировщике и отдаёт напоминание на отправку
-    пользователю в установленный срок
+    пользователю в установленный срок.
 
     :param user_id: id пользователя
     :param event: название события
@@ -48,16 +44,22 @@ def set_scheduler_event(
     :param event_time: время события
     :param comment: комментарий пользователя
     """
-
-    text_for_scheduler = f"Напоминание! Cегодня {event} в" \
-                         f" {event_time}: {comment}"
-    event_date = datetime.strptime(f"{event_date} {event_time}",
-                                   "%d/%m/%Y %H:%M")
+    text_for_scheduler: str = (
+        f"Напоминание! Сегодня {event} в {event_time}: {comment}"
+    )
+    event_date: datetime = datetime.strptime(
+        date_string=f"{event_date} {event_time}",
+        format="%d/%m/%Y %H:%M",
+    )
     reminder_time = event_date - timedelta(minutes=1)
     created_at = datetime.now()
 
-    if db_manager.send_task_to_bq(user_id, text_for_scheduler,
-                                  event_date, created_at):
+    if db_manager.send_task_to_bq(
+        user_id=user_id,
+        message_text=text_for_scheduler,
+        planned_at=event_date,
+        created_at=created_at,
+    ):
         SCHEDULER.add_job(
             send_reminder_to_user,
             "date",

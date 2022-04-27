@@ -1,17 +1,12 @@
-import logging
-
 from aiogram.dispatcher import FSMContext
 from aiogram.types import Message
 
 from filters import UserRoleFilter
 from loader import bot, db_manager, dp
 from states import AdminMessageStates
+from utils import get_logger
 
-logging.basicConfig(
-    filename="logging/bot.log",
-    level=logging.ERROR,
-    format="%(asctime)s - %(name)s- %(levelname)s : %(message)s",
-)
+logger = get_logger(__name__)
 
 
 @dp.message_handler(
@@ -62,7 +57,7 @@ async def admin_message_fin(message: Message, state: FSMContext) -> None:
                 try:
                     await bot.send_message(chat_id=row[0], text=text)
                 except Exception as e:
-                    logging.error(e)
+                    logger.error(e)
         else:
             await message.answer('Операция отменена.')
         await state.finish()

@@ -17,19 +17,18 @@ from states import RegStates
 
 async def tracker(message: Message, key: str, state: FSMContext) -> None:
     """
-    Функция проверяет количество вводов имейла и паролей пользователем
+        Функция проверяет количество вводов email и паролей пользователем
     и в случае превышения лимита в 3 ед. создает в редисе запись
-    с ключом 'black_list' со значением True
+    с ключом 'black_list' со значением True.
     """
-    limit = 3
-    data = await cache.get_data(
-        chat=message.chat.id,
-        user=message.from_user.id
-    )
+    limit: int = 3
+    chat_id: int = message.chat.id
+    user_id: int = message.from_user.id
+    data: dict = await cache.get_data(chat=chat_id, user=user_id)
     try:
         if data[key] >= limit:
             data['black_list'] = True
-            manager.send_to_blacklist(user_id=message.from_user.id)
+            manager.send_to_blacklist(user_id=user_id)
             data.pop('email_try', None)
             data.pop('password_try', None)
             await state.finish()
@@ -37,66 +36,74 @@ async def tracker(message: Message, key: str, state: FSMContext) -> None:
             data[key] += 1
     except KeyError:
         data[key] = 2
-    await cache.update_data(
-        chat=message.chat.id,
-        user=message.from_user.id,
-        data=data
-    )
+    await cache.update_data(chat=chat_id, user=user_id, data=data)
 
 
 @dp.message_handler(commands=["reg"], state="*")
 async def process_reg_command(message: Message):
     check_user = await manager.check_user(message=message)
     if check_user:
-        await message.answer("Добро пожаловать в чат Бот компании Ylab. Вы "
-                             "уже зарегестрированы. Нажмите /help и выберите "
-                             "команду.")
+        await message.answer(
+            text=("Добро пожаловать в чат Бот компании Ylab. Вы уже "
+                  "зарегистрированы. Нажмите /help и выберите команду.")
+        )
     else:
-        await message.answer("Здравствуйте, напишите адрес свой электронной "
-                             "почты в домене @ylab.io для прохождения "
-                             "дальнейшей регистрации!")
+        await message.answer(
+            text=("Здравствуйте, напишите адрес свой электронной почты в "
+                  "домене @ylab.io для прохождения дальнейшей регистрации!")
+        )
         await RegStates.EMAIL_MESSAGE.set()
 
 
 @dp.message_handler(state=RegStates.EMAIL_MESSAGE)
 async def send_email_message(message: Message, state: FSMContext) -> None:
     await tracker(message=message, key='email_try', state=state)
-    secret_key = secrets.token_urlsafe(8)
+
+    secret_key: str = secrets.token_urlsafe(8)
+    chat_id: int = message.chat.id
+    user_id: int = message.from_user.id
+    target_email: str = message.text
+
     await cache.update_data(
-        chat=message.chat.id,
-        user=message.from_user.id,
+        chat=chat_id,
+        user=user_id,
         data={'secret_key': secret_key}
     )
-    if is_data_valid(message.text, 'email'):
-        check_auth: bool = await manager.check_auth(message)
-        if not check_auth:
-            await manager.registration(message)
-        sending_message(message.text, secret_key)
-        await message.answer("На вашу почту отправлен ключ "
-                             "подтверждения введите его: ")
-        await cache.update_data(
-            chat=message.chat.id,
-            user=message.from_user.id,
-            data={'email': message.text}
-        )
+    if is_data_valid(data=target_email, case='email'):
+        if not await manager.check_auth(message=message):
+            await manager.registration(message=message)
+        # TODO: Отправлять письма асинхронно
+        sending_message(to_email=target_email, secret_key=secret_key)
 
+        await message.answer(
+            text="На вашу почту отправлен ключ подтверждения введите его:"
+        )
+        await cache.update_data(
+            chat=chat_id,
+            user=user_id,
+            data={'email': target_email}
+        )
         await RegStates.KEY_MESSAGE.set()
     else:
-        await message.answer("Проверьте правильность введенного адреса")
+        await message.answer(
+            text="Проверьте правильность введенного адреса"
+        )
 
 
 @dp.message_handler(state=RegStates.KEY_MESSAGE)
 async def input_key_message(message: Message, state: FSMContext) -> None:
     await tracker(message=message, key='password_try', state=state)
-    secret_key = await cache.get_data(
+    secret_key: dict = await cache.get_data(
         chat=message.chat.id,
         user=message.from_user.id
     )
-    if secret_key['secret_key'] == message.text:
-        await manager.authentication(message)
-        await message.answer("Вы ввели верный ключ! "
-                             "Добро пожаловать в YlabBot")
-        await state.finish()
-
+    if secret_key.get('secret_key') != message.text:
+        await message.answer(
+            text="Неверный пароль. Пожалуйста, повторите попытку."
+        )
     else:
-        await message.answer("Неверный пароль. Пожалуйста, повторите попытку.")
+        await manager.authentication(message)
+        await message.answer(
+            text="Вы ввели верный ключ! Добро пожаловать в YlabBot"
+        )
+        await state.finish()
