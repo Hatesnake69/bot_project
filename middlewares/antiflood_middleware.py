@@ -14,7 +14,11 @@ class AntiFloodThrottlingMiddleware(BaseMiddleware):
         self.prefix = key_prefix
         super(AntiFloodThrottlingMiddleware, self).__init__()
 
-    async def on_process_message(self, message: types.Message):
+    async def on_process_message(
+            self,
+            message: types.Message,
+            data: dict,
+    ):
         """Этот хэндлер вызывается, когда бот получает сообщение."""
         handler = current_handler.get()
         dispatcher = Dispatcher.get_current()
