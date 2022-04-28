@@ -9,6 +9,9 @@ from keyboards import confirmed_kb
 from loader import bot, db_manager, dp
 from services.graph import get_image, get_salary_period, get_xlabel_for_graph
 from states import GraphConfirmForm
+from utils import get_logger
+
+log = get_logger(__name__)
 
 
 def save_graph(df) -> None:
@@ -128,6 +131,30 @@ async def send_confirmed_to_db(message: Message, state: FSMContext) -> None:
     await state.finish()
 
 
+async def form_list_of_chat_users(chat_id: int) -> list:
+    """
+    Функция формирует список из зарегистрированных в боте сотрудников,
+    которые находятся в передаваемом чат-канале
+    :param chat_id: айди канала
+    :type chat_id: int
+    :rtype: list
+    """
+
+    list_of_reg_users: list = db_manager.get_user_id_list()
+    list_of_chat_users: list = []
+    for i_user in list_of_reg_users:
+        try:
+            user_status = await bot.get_chat_member(
+                chat_id=chat_id,
+                user_id=int(i_user[0])
+            )
+            if user_status['status'] != 'left':
+                list_of_chat_users.append(i_user[0])
+        except Exception as e:
+            log.error(e)
+    return list_of_chat_users
+
+
 async def send_reminder_to_user(user_id: int, planned_at: datetime) -> None:
     """
     Отправляет напоминание пользователю.
@@ -139,7 +166,11 @@ async def send_reminder_to_user(user_id: int, planned_at: datetime) -> None:
     reminder_text = db_manager.get_reminder_text(planned_at)
 
     for row in reminder_text:
-        if CHAT_ID and user_id == int(CHAT_ID):
-            for telegram_id in db_manager.get_user_id_list():
+
+        if CHAT_ID and user_id == CHAT_ID:
+            list_of_chat_users = await form_list_of_chat_users(
+                 chat_id=CHAT_ID
+            )
+            for telegram_id in list_of_chat_users:
                 await bot.send_message(telegram_id, text=row[1])
         await bot.send_message(row[0], text=row[1])

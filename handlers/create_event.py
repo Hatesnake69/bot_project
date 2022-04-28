@@ -6,17 +6,13 @@ from aiogram.types import CallbackQuery, Message, ReplyKeyboardMarkup
 from aiogram.utils.markdown import text
 from aiogram_calendar import SimpleCalendar, simple_cal_callback
 
+from data import CHAT_ID
 from filters import IsRegistered
-from loader import bot
-from loader import db_manager as manager
 from loader import dp
 from services.set_scheduler import set_scheduler_event
 from states import CreateEventForm
-from utils import get_logger
 
 start_kb = ReplyKeyboardMarkup(resize_keyboard=True)
-
-log = get_logger(__name__)
 
 
 @dp.message_handler(
@@ -259,26 +255,15 @@ async def set_event_confirm(message: Message, state: FSMContext) -> None:
                         default=None
                 ) == "Персональное событие":
                     user_id = message.from_user.id
-                    set_scheduler_event(
-                        user_id=user_id,
-                        event=data["event_name"],
-                        event_date=data["event_date"],
-                        event_time=data["event_time"],
-                        comment=data["event_comment"],
-                    )
                 else:
-                    chat_id = message.chat.id
-                    list_of_chat_users = await form_list_of_chat_users(
-                        chat_id=chat_id
-                    )
-                    for i_user in list_of_chat_users:
-                        set_scheduler_event(
-                            user_id=i_user,
-                            event=data["event_name"],
-                            event_date=data["event_date"],
-                            event_time=data["event_time"],
-                            comment=data["event_comment"],
-                        )
+                    user_id = CHAT_ID
+                set_scheduler_event(
+                    user_id=user_id,
+                    event=data["event_name"],
+                    event_date=data["event_date"],
+                    event_time=data["event_time"],
+                    comment=data["event_comment"],
+                )
             else:
                 await message.reply("Событие не создано")
         await state.finish()
@@ -296,27 +281,3 @@ def date_check(date: datetime) -> bool:
         return date.date() >= date_now.date()
     else:
         return date > date_now
-
-
-async def form_list_of_chat_users(chat_id: int) -> list:
-    """
-    Функция формирует список из зарегистрированных в боте сотрудников,
-    которые находятся в передаваемом чат-канале
-    :param chat_id: айди канала
-    :type chat_id: int
-    :rtype: list
-    """
-
-    list_of_reg_users: list = manager.get_user_id_list()
-    list_of_chat_users: list = []
-    for i_user in list_of_reg_users:
-        try:
-            user_status = await bot.get_chat_member(
-                chat_id=chat_id,
-                user_id=int(i_user[0])
-            )
-            if user_status['status'] != 'left':
-                list_of_chat_users.append(i_user[0])
-        except Exception as e:
-            log.error(e)
-    return list_of_chat_users
