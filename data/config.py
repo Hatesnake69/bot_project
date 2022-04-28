@@ -23,7 +23,7 @@ WEBAPP_PORT: str = getenv("WEBAPP_PORT")
 CREDENTIALS_PATH: str = getenv("CREDENTIALS_PATH")  # BigQuery
 PROJECT: str = getenv("PROJECT")  # BigQuery
 TIMEZONE: str = getenv("TIMEZONE")
-CHAT_ID: int = getenv("CHAT_ID")
+CHAT_ID: int = int(getenv("CHAT_ID"))
 TIME_TO_LIVE_DATA = getenv("TIME_TO_LIVE_DATA")
 TIME_TO_LIVE_STATE = getenv("TIME_TO_LIVE_STATE")
 
