@@ -20,8 +20,10 @@ def sending_message(to_email: str, secret_key: str) -> None:
     :param secret_key: секретный ключ
     :type secret_key: str
 
-    :rtype: str
+    :return: None
+    :rtype: NoneType
     """
+
     try:
         with open(file="services/index.html", mode="r") as mail_template:
             template_old = mail_template.read()

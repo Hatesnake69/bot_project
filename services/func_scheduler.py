@@ -20,7 +20,11 @@ def save_graph(df) -> None:
 
     :param df: DataFrame пользователя по зарплатному периоду
     :type df: DataFrame
+
+    :return: None
+    :rtype: NoneType
     """
+
     labels = get_xlabel_for_graph(df)
     get_image(df, labels)
 
@@ -29,7 +33,11 @@ async def send_graph_to_all() -> None:
     """
     Отправляет график пользователю и делает отметку в БД,
     если сообщение было успешно доставлено.
+
+    :return: None
+    :rtype: NoneType
     """
+
     salary_period = get_salary_period(date.today())
     df_iterable = db_manager.get_users_salaryperiod(
         salary_period
@@ -61,7 +69,14 @@ async def send_graph_to_all() -> None:
 async def set_keyboard(user_id: int) -> None:
     """
     Функция устанавливает две кнопки "согласиться/отклонить".
+
+    :param user_id: id пользователя
+    :type user_id: int
+
+    :return: None
+    :rtype: NoneType
     """
+
     await bot.send_message(
         chat_id=user_id,
         text="Подтвердить часы",
@@ -76,7 +91,16 @@ async def confirmed_call(callback_query: CallbackQuery,
     Функция определяет нажатую кнопку и в случае, если пользователь нажал на
     кнопку "согласиться", его ответ загружается в БД, в противном случае
     пользователю предлагается ввести комментарий.
+
+    :param callback_query: объект CallbackQuery
+    :type callback_query: CallbackQuery
+    :param state: объект FSMContext
+    :type state: FSMContext
+
+    :return: None
+    :rtype: NoneType
     """
+
     code: int = int(callback_query.data[-1])
     async with state.proxy() as data:
         data["is_confirmed"] = bool(code)
@@ -113,7 +137,16 @@ async def confirmed_call(callback_query: CallbackQuery,
 async def send_confirmed_to_db(message: Message, state: FSMContext) -> None:
     """
     Функция принимает комментарий и загружает ответ в БД.
+
+    :param message: объект Message
+    :type message: Message
+    :param state: объект FSMContext
+    :type state: FSMContext
+
+    :return: None
+    :rtype: NoneType
     """
+
     async with state.proxy() as data:
         data["response_comment"] = message.text
     try:
@@ -135,8 +168,11 @@ async def form_list_of_chat_users(chat_id: int) -> list:
     """
     Функция формирует список из зарегистрированных в боте сотрудников,
     которые находятся в передаваемом чат-канале
-    :param chat_id: айди канала
+
+    :param chat_id: id канала
     :type chat_id: int
+
+    :return: список пользователей
     :rtype: list
     """
 
@@ -160,7 +196,12 @@ async def send_reminder_to_user(user_id: int, planned_at: datetime) -> None:
     Отправляет напоминание пользователю.
 
     :param user_id: id пользователя
+    :type user_id: int
     :param planned_at: дата события
+    :type planned_at: datetime
+
+    :return: None
+    :rtype: NoneType
     """
 
     reminder_text = db_manager.get_reminder_text(planned_at)

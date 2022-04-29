@@ -17,8 +17,14 @@ logger = get_logger(__name__)
 async def admin_message_start(message: Message) -> None:
     """
     Перехватывает команду "/ban_user"
-    :param message: Message
+
+    :param message: объект Message
+    :type message : Message
+
+    :return: None
+    :rtype: NoneType
     """
+
     await AdminMessageStates.admin_message_text.set()
     await message.reply("Введите сообщение для всех пользователей")
 
@@ -27,9 +33,16 @@ async def admin_message_start(message: Message) -> None:
 async def admin_message_text(message: Message, state: FSMContext) -> None:
     """
     Пишет текст сообщения для всех пользователей в proxy
-    :param message: Message
+
+    :param message: объект Message
+    :type message : Message
     :param state: FSMContext
+    :type state : объект FSMContext
+
+    :return: None
+    :rtype: NoneType
     """
+
     async with state.proxy() as data:
         data['message_text'] = message.text
     await AdminMessageStates.next()
@@ -43,9 +56,16 @@ async def admin_message_text(message: Message, state: FSMContext) -> None:
 async def admin_message_fin(message: Message, state: FSMContext) -> None:
     """
     Подтверждение, завершение работы
-    :param message: Message
+
+    :param message: объект Message
+    :type message : Message
     :param state: FSMContext
+    :type state : объект FSMContext
+
+    :return: None
+    :rtype: NoneType
     """
+
     if message.text.lower() in {"да", "нет"}:
         if message.text.lower() == "да":
             async with state.proxy() as data:

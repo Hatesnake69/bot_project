@@ -18,7 +18,14 @@ async def search_info(message: Message) -> None:
     """
     Обработчик осуществляет приветствие и информирует о
     правилах поиска пользователей.
+
+    :param message: объект Message
+    :type message: Message
+
+    :return: None
+    :rtype: NoneType
     """
+
     await message.answer(
         "Что бы найти информацию о зарегистрированном пользователе введите: "
         "Фамилию, Имя, корпоративную почту (@ylab.io) или telegram-логин "
@@ -37,7 +44,14 @@ async def search_response(message: Message) -> None:
     """
     Обработчик принимает поисковый запрос от пользователя,
     и отправляет сообщение в чат с результатом поиска.
+
+    :param message: объект Message
+    :type message: Message
+
+    :return: None
+    :rtype: NoneType
     """
+
     parse_data = parsing(message.text)
     if isinstance(parse_data, str):
         await message.answer(parse_data)
@@ -53,7 +67,16 @@ async def after_search_response(message: Message, state: FSMContext) -> None:
     Обработчик реализует свои действия после того, как пользователь
     отправил поисковый запрос, и не зависимо от результата поиска
     пользователю будет предложено повторить поиск или покинуть его.
+
+    :param message: объект Message
+    :type message: Message
+    :param state: объект FSMContext
+    :type state: FSMContext
+
+    :return: None
+    :rtype: NoneType
     """
+
     if message.text.lower() == 'да':
         await message.answer(
             "Что бы найти информацию о зарегистрированном пользователе"
@@ -90,8 +113,10 @@ def parsing(data: str) -> any:
     :param data: "cырые" данные вытянутые из сообщения пользователя
     :type data: str.data
 
+    :return: найденные данные пользователя
     :retype: -> any
     """
+
     data: list = data.split()
     parse_data: dict = {'full_name': 'str', 'email': 'str',
                         'telegram_name': 'str'}
@@ -127,12 +152,10 @@ def is_data_valid(data: str, case: str) -> bool:
     :param case: типа шаблона
     :type case: str
 
-    :rtype: bool
-
-    is_nice = True
-    state = "nice" if is_nice else "not nice"
-
+    :return: True or False
+    :rtype: boo
     """
+
     re_telegram = compile(r"@+[a-zA-Z0-9_]{5,64}")
     re_email = compile(r"([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@ylab.io")
     re_text = compile(
@@ -153,8 +176,10 @@ def users_search(parse_data: dict) -> str:
     :param parse_data: структурированные данные
     :type parse_data: dict.parse_data
 
+    :return: найденные данные
     :rtype: str
     """
+
     df_iterable = db_manager.get_df_for_search(parse_data).\
         to_dataframe_iterable()
     for frame_data in df_iterable:
@@ -180,8 +205,10 @@ def view(data: dict) -> str:
     :param data: найденная информация в БД
     :type data: dict['str', str']
 
+    :return: строка с данными
     :rtype: str
     """
+
     answer = '\n'.join([' '.join(data[index].values()) for index in data])
     return answer
 
@@ -198,8 +225,10 @@ def match(search_answer: dict, parse_data: dict) -> bool:
     :param parse_data: структурированные данные
     :type parse_data: dict[str, str]
 
+    :return: True or False
     :rtype: bool
     """
+
     s_name = search_answer['fullname'].split()
     p_name = parse_data['full_name']
     if s_name[0] == p_name[0] and s_name[1] == p_name[1] or \

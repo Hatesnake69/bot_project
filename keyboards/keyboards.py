@@ -53,10 +53,14 @@ def collect_keyboard(faq_category: str,
     категории вопросов и user_id,
 
     :param faq_category: категория вопросов
-    :type user_id: идентификатор пользователя
-    :type bck_button: объект InlineKeyboardButton
+    :type faq_category: str
+    :param user_id: id пользователя
+    :type user_id: int
+    :param bck_button: объект InlineKeyboardButton
+    :type bck_button: InlineKeyboardButton
 
-    :rtype: объект InlineKeyboardMarkup
+    :return: клавиатура с вопросами
+    :rtype: InlineKeyboardMarkup
     """
 
     selected_kb = InlineKeyboardMarkup(row_width=1)

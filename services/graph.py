@@ -1,19 +1,25 @@
 import pandas.core.series
+import datetime
 from matplotlib.pyplot import figure, savefig
 from numpy import arange
 from pandas import DataFrame, date_range, to_datetime
 from seaborn import histplot
 
+
 from utils import constants
 
 
-def get_salary_period(today) -> str:
+def get_salary_period(today: datetime.date) -> str:
     """
     Формирует строку зарплатного периода.
 
     :param today: день для определения зарплатного периода
     :type today: datetime.date
+
+    :return: строка зарплатного периода
+    :rtype: str
     """
+
     day: int = today.day
     month: int = today.month
     year: str = today.strftime("%y")
@@ -29,10 +35,13 @@ def get_xlabel_for_graph(df: [DataFrame]) -> DataFrame:
     """
     Формирует Dataframe дат и возвращает столбец дата(день недели)
 
-        :param df: Dataframe из БД
-        :type df: pandas.core.frame.DataFrame
+    :param df: Dataframe из БД
+    :type df: pandas.core.frame.DataFrame
 
+    :return: столбец дата(день недели)
+    :rtype: pandas.core.frame.DataFrame
     """
+
     set_date: set = set(df["trackdate"])
     df_xlabel = DataFrame(
         {"trackdate": date_range(start=min(set_date), end=max(set_date))}
@@ -54,6 +63,9 @@ def get_image(df: DataFrame, xlabel: [pandas.core.series.Series]) -> None:
     :type df: pandas.core.frame.DataFrame
     :param xlabel: набор данных для подписи тиков по оси Х
     :type xlabel: pandas.core.series.Series
+
+    :return: None
+    :rtype: NoneType
     """
 
     fig = figure(figsize=(16, 8))
@@ -66,21 +78,16 @@ def get_image(df: DataFrame, xlabel: [pandas.core.series.Series]) -> None:
         shrink=0.8,
     )
 
-    # Установка тиков по оси X
     mids = [rect.get_x() + rect.get_width() / 2 for rect in graph.patches]
     graph.set_xticks(list(set(mids)))
     graph.set_xticklabels(xlabel.tolist())
 
-    # Установка тиков по оси Y
     max_hour: int = max(df.groupby(["trackdate"])["time"].sum())
     graph.set_yticks(arange(0, max_hour + 1, 1))
 
-    # Добавление подписи по осям
     graph.set_xlabel("Дни")
     graph.set_ylabel("Часы")
 
-    # Поворот тиков на оси Х
     fig.autofmt_xdate()
 
-    # Сохранение в файл
     savefig("saved_graph.png")

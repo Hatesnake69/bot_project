@@ -28,6 +28,7 @@ class DBManager(AbstractDBManager):
         :param query: запрос
         :type query: str
 
+        :return: объект Bigquery
         :rtype: bigquery.table.RowIterator, bool
         """
 
@@ -42,6 +43,7 @@ class DBManager(AbstractDBManager):
         :param message: сообщение пользователя
         :type message: Message
 
+        :return: True or False
         :rtype: bool
         """
 
@@ -65,8 +67,8 @@ class DBManager(AbstractDBManager):
         :param role: проверяемая роль
         :type role: str
 
-
-        :rtype: str, bool
+        :return: True or False
+        :rtype: bool
         """
 
         tg_id = message.from_user.id
@@ -86,7 +88,8 @@ class DBManager(AbstractDBManager):
         :param message: сообщение пользователя
         :type message: Message
 
-        :rtype: str
+        :return: True or False
+        :rtype: bool
         """
 
         tg_id = int(message.from_user.id)
@@ -104,7 +107,9 @@ class DBManager(AbstractDBManager):
 
         :param message: сообщение пользователя из которого ожидается email
         :type message: types.Message
-        :rtype: bool
+
+        :return: None
+        :rtype: NoneType
         """
 
         tg_id = message.from_user.id
@@ -129,7 +134,9 @@ class DBManager(AbstractDBManager):
         :param message: сообщение пользователя из которого ожидается
         secret key
         :type message: types.Message
-        :rtype: bool
+
+        :return: None
+        :rtype: NoneType
         """
 
         tg_id: int = message.from_user.id
@@ -147,7 +154,11 @@ class DBManager(AbstractDBManager):
         добавляет в блэклист простыми словами
         :param user_id: сообщение пользователя
         :type user_id: int
+
+        :return: None
+        :rtype: NoneType
         """
+
         tg_id: int = user_id
         query: str = (
             f"UPDATE handy-digit-312214.TG_Bot_Stager.users"
@@ -166,7 +177,11 @@ class DBManager(AbstractDBManager):
 
         :param user_id: id пользователя
         :type user_id: int
+
+        :return: None
+        :rtype: NoneType
         """
+
         tg_id: int = user_id
         query: str = (
             f"UPDATE handy-digit-312214.TG_Bot_Stager.users"
@@ -186,6 +201,7 @@ class DBManager(AbstractDBManager):
         :param message: сообщение пользователя
         :type message: Message
 
+        :return: True or False
         :rtype: bool
         """
 
@@ -202,13 +218,18 @@ class DBManager(AbstractDBManager):
                         int, message_text: str,
                         planned_at: datetime,
                         created_at: datetime) \
-            -> bigquery.table.RowIterator or bool:
+            -> Union[bigquery.table.RowIterator, bool]:
         """
-        Отправляет данные о событии в хранилище BigQuery
+         Отправляет данные о событии в хранилище BigQuery
         :param user_id: id пользователя
+        :type user_id: int
         :param message_text: текст дл напоминания
+        :type message_text: str
         :param planned_at: дата события
+        :type planned_at: datetime
         :param created_at: время создания
+        :type created_at: datetime
+        :return: True/False или объект Bigquery
         :rtype: bigquery.table.RowIterator or bool
         """
 
@@ -231,6 +252,9 @@ class DBManager(AbstractDBManager):
         Функция выгружает из БД сообщение напоминание
 
         :param planned_at: дата события
+        :type planned_at: datetime
+
+        :return: напоминание для пользователя
         :rtype: list
         """
 
@@ -254,13 +278,15 @@ class DBManager(AbstractDBManager):
         """
         Формирует Dataframe через запрос к БД
 
-         :param user_id: id пользователя
-         :type user_id: int
+        :param user_id: id пользователя
+        :type user_id: int
+        :param salary_period: дата составления графика
+        :type salary_period: datetime.date
 
-         :param salary_period: дата составления графика
-         :type salary_period: datetime.date
-
+        :return: объект Bigquery
+        :rtype: bigquery.table.RowIterator
         """
+
         query: str = (
             f"SELECT  trackdate, projectName, SUM(timefact) AS time FROM "
             f"TG_Bot_Stager.salaryDetailsByTrackdate  "
@@ -282,9 +308,11 @@ class DBManager(AbstractDBManager):
         """
         Функция выгружает из БД зарплатные периоды
 
-         :param user_id: id пользователя
-         :type user_id: int
+        :param user_id: id пользователя
+        :type user_id: int
 
+        :return: объект Bigquery
+        :rtype: bigquery.table.RowIterator
         """
 
         query: str = (
@@ -297,12 +325,15 @@ class DBManager(AbstractDBManager):
         except Exception as e:
             logging.error(e)
 
-    def get_df_for_faq(self, faq_key) -> list:
+    def get_df_for_faq(self, faq_key: str) -> list:
         """
         Функция выгружает из БД ответ по ключу FAQ и
         возвращает в строковом виде
 
         :param faq_key: ключ записи
+        :type faq_key: str
+
+        :return: ответ для пользоватееля
         :rtype: list
         """
 
@@ -314,18 +345,21 @@ class DBManager(AbstractDBManager):
         except Exception as e:
             logging.error(e)
 
-    def get_quest_faq(self, faq_category, user_id) \
+    def get_quest_faq(self, faq_category: str, user_id: int) \
             -> bigquery.table.RowIterator:
         """
-        Функция выгружает из БД вопросы по
-        категории и индентификатору пользователя,
-        возвращает список
+        Функция выгружает из БД вопросы по категории
+        и id пользователя, возвращает список
 
         :param faq_category: категории вопросов
-        :param user_id: идентификатор пользователя
+        :type faq_category: str
+        :param user_id: id пользователя
+        :type user_id: int
 
+        :return: объект Bigquery
         :rtype: bigquery.table.RowIterator
         """
+
         query: str = (f"SELECT question, role, key "
                       f"FROM handy-digit-312214.TG_Bot_Stager.faq_datas "
                       f"WHERE key LIKE '{faq_category}%' "
@@ -348,6 +382,17 @@ class DBManager(AbstractDBManager):
         """
         Функция добавляет в БД данные по зарплатному периоду
 
+        :param user_id: id пользователя
+        :type user_id: int
+        :param message_id: id сообщения
+        :type message_id: int
+        :param mailing_date: дата отправки
+        :type mailing_date: datetime
+        :param salary_period: зарплатный период
+        :type salary_period: str
+
+        :return: None
+        :rtype: NoneType
         """
 
         query: str = (
@@ -368,12 +413,26 @@ class DBManager(AbstractDBManager):
             message_id: int,
             is_confirmed: bool,
             response_comment: str,
-            cofirmed_at: datetime
+            confirmed_at: datetime
     ) -> None:
         """
         Функция обновляет значения согласовано/не согласовано отработанное
         время, проставляет время согласования и заполняет поле комментарий,
         если он есть
+
+        :param user_id: id пользователя
+        :type user_id: int
+        :param message_id: id сообщения
+        :type message_id: int
+        :param is_confirmed: статус подтверждения
+        :type is_confirmed: bool
+        :param response_comment: комментарий пользователя
+        :type response_comment: str
+        :param confirmed_at: время подтверждения
+        :type confirmed_at: datetime
+
+        :return: None
+        :rtype: NoneType
         """
 
         if response_comment:
@@ -381,7 +440,8 @@ class DBManager(AbstractDBManager):
                 f"UPDATE handy-digit-312214.TG_Bot_Stager.salary_response "
                 f"SET is_confirmed = {is_confirmed},"
                 f"response_comment = '{response_comment}',"
-                f"confirmed_at = '{cofirmed_at.strftime('%Y-%m-%d %H:%M:%S')}'"
+                f"confirmed_at = "
+                f"'{confirmed_at.strftime('%Y-%m-%d %H:%M:%S')}'"
                 f"WHERE telegram_id = {user_id} "
                 f"AND message_id = {message_id}"
             )
@@ -390,7 +450,8 @@ class DBManager(AbstractDBManager):
             query: str = (
                 f"UPDATE handy-digit-312214.TG_Bot_Stager.salary_response "
                 f"SET is_confirmed = {is_confirmed}, "
-                f"confirmed_at = '{cofirmed_at.strftime('%Y-%m-%d %H:%M:%S')}'"
+                f"confirmed_at = "
+                f"'{confirmed_at.strftime('%Y-%m-%d %H:%M:%S')}'"
                 f"WHERE telegram_id = {user_id} "
                 f"AND message_id = {message_id}"
             )
@@ -399,7 +460,18 @@ class DBManager(AbstractDBManager):
         except Exception as e:
             logging.error(e)
 
-    def get_df_for_search(self, parse_data):
+    def get_df_for_search(self, parse_data: dict)\
+            -> bigquery.table.RowIterator:
+        """
+        Функция выгружает из БД ФИО, email, имя в телеграме
+        согласно запрошенным данным
+
+        :param parse_data: словарь с данными поиска
+        :type parse_data: dict
+
+        :return: объект Bigquery
+        :rtype: bigquery.table.RowIterator
+        """
 
         query_data: str = f"""SELECT fullname, email, telegram_name
                      FROM TG_Bot_Stager.dev_search_view \
@@ -419,6 +491,11 @@ class DBManager(AbstractDBManager):
         """
         Функция выгружает из БД всех пользователей по заданному периоду
 
+        :param salary_period: зарплатный период
+        :type salary_period: str
+
+        :return: объект Bigquery
+        :rtype: bigquery.table.RowIterator
         """
 
         query: str = (f"SELECT us.telegram_id, sal.trackdate,"
@@ -442,9 +519,11 @@ class DBManager(AbstractDBManager):
         """
         Метод выводит список telegram_id
         уникальных подтвержденных сотрудников из бд
-        :rtype: list
 
+        :return: список уникальных сотрудников
+        :rtype: list
         """
+
         query = (
             "SELECT DISTINCT telegram_id FROM"
             " handy-digit-312214.TG_Bot_Stager.users"

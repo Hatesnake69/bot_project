@@ -16,12 +16,18 @@ from services import save_graph
 from utils import constants
 
 
-async def get_menu_salary_period(message: Message):
+async def get_menu_salary_period(message: Message) -> dict:
     """
     Функция проверяет есть ли в кеш периоды,
     если нет достает из БД и обновляет кеш
 
+    :param message: объект Message
+    :type message: message
+
+    :return: словарь с зарплатными периодами
+    :rtype: dict
     """
+
     try:
 
         data = await cache.get_data(
@@ -49,7 +55,13 @@ def sort_salary_periods(salary_periods: list) -> list:
     """
     Функция сортирует зарплатные периоды и возвращает отсортированный список
 
+    :param salary_periods: список с зарплатными периодами
+    :type salary_periods: list
+
+    :return: отсортированный список
+    :rtype: list
     """
+
     periods: list = []
 
     for period in salary_periods:
@@ -72,10 +84,13 @@ def sort_salary_periods(salary_periods: list) -> list:
 )
 async def print_menu_salary_period(message: Message) -> None:
     """
-    Создает запрос в БД об имеющихся ЗП
-    и формирует меню
-    :param message: сообщение
+    Создает запрос в БД об имеющихся ЗП и формирует меню
 
+    :param message: объект Message
+    :type message: Message
+
+    :return: None
+    :rtype: NoneType
     """
 
     salary_periods = await get_menu_salary_period(message)
@@ -106,6 +121,11 @@ async def send_graph(call: CallbackQuery) -> None:
     """
     Формирует график по ЗП и отправляет его
 
+    :param call: объект CallbackQuery
+    :type call: CallbackQuery
+
+    :return: None
+    :rtype: NoneType
     """
 
     df_iterable = db_manager.get_df_for_graph(

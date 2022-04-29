@@ -17,7 +17,13 @@ SCHEDULER = AsyncIOScheduler(jobstores=jobstores, executors=executors)
 
 
 def set_scheduler_for_payday() -> None:
-    """Формирует задачу планировщика на будний день."""
+    """
+    Формирует задачу планировщика на будний день.
+
+    :return: None
+    :rtype: NoneType
+    """
+
     day: date = date.today()
     while is_day_off(date=day):
         day += timedelta(days=1)
@@ -33,17 +39,26 @@ def set_scheduler_event(
     event_date: str,
     event_time: str,
     comment: str,
-):
+) -> None:
     """
     Формирует задачу в планировщике и отдаёт напоминание на отправку
     пользователю в установленный срок.
 
     :param user_id: id пользователя
+    :type user_id: int
     :param event: название события
+    :type event: str
     :param event_date: дата события
+    :type event_date: str
     :param event_time: время события
+    :type event_time: str
     :param comment: комментарий пользователя
+    :type comment: str
+
+    :return: None
+    :rtype: NoneType
     """
+
     text_for_scheduler: str = (
         f"Напоминание! Сегодня {event} в {event_time}: {comment}"
     )

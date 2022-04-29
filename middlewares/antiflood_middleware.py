@@ -18,8 +18,19 @@ class AntiFloodThrottlingMiddleware(BaseMiddleware):
             self,
             message: types.Message,
             data: dict,
-    ):
-        """Этот хэндлер вызывается, когда бот получает сообщение."""
+    ) -> None:
+        """
+        Этот хэндлер вызывается, когда бот получает сообщение.
+
+        :param message: объект Message
+        :type message: Message
+        :param data: данные пользователя
+        :type data: dict
+
+        :return: None
+        :rtype: NoneType
+        """
+
         handler = current_handler.get()
         dispatcher = Dispatcher.get_current()
         if handler:
@@ -42,14 +53,20 @@ class AntiFloodThrottlingMiddleware(BaseMiddleware):
             self,
             message: types.Message,
             throttled: Throttled
-    ):
+    ) -> None:
         """
         уведомляет юзера только о первом превышении лимита, и затем уведомляет
         о разблокировке.
 
-        :param message:
-        :param throttled:
+        :param message: объект Message
+        :type message: Message
+        :param throttled: объект Throttled
+        :type throttled: Throttled
+
+        :return: None
+        :rtype: NoneType
         """
+
         handler = current_handler.get()
         dispatcher = Dispatcher.get_current()
         if handler:
