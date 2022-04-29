@@ -1,7 +1,8 @@
-import re
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from smtplib import SMTP, SMTPDataError
+
+from jinja2 import Template
 
 from data.config import FROM_EMAIL, PASSWORD
 from utils import get_logger
@@ -24,10 +25,9 @@ def sending_message(to_email: str, secret_key: str) -> None:
     """
     try:
         with open(file="services/index.html", mode="r") as mail_template:
-            template_old = mail_template.read()
-            template_new = re.sub(
-                r"Проверочный код \w+", secret_key, template_old
-            )
+            template_new = Template(
+                mail_template.read()
+            ).render(secret_key=secret_key)
             with open("index.html", "w") as f:
                 f.write(template_new)
     except IOError:
