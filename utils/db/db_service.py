@@ -369,8 +369,7 @@ class DBManager(AbstractDBManager):
                       f"OR role = 'common')")
 
         try:
-            result = self.bqclient.query(query=query)
-            return result.result()
+            return self.make_query(query)
         except Exception as e:
             logging.error(e)
 
