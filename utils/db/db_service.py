@@ -50,7 +50,7 @@ class DBManager(AbstractDBManager):
         tg_id = message.from_user.id
 
         qry: str = (f"SELECT telegram_id FROM "
-                    f"handy-digit-312214.TG_Bot_Stager.users "
+                    f"TG_Bot_Stager.users "
                     f"WHERE telegram_id = {tg_id} AND "
                     f"is_confirmed = true")
 
@@ -73,8 +73,8 @@ class DBManager(AbstractDBManager):
 
         tg_id = message.from_user.id
 
-        qry: str = (f"SELECT role FROM handy-digit-312214.TG_Bot_Stager."
-                    f"users WHERE telegram_id = {tg_id}")
+        qry: str = (f"SELECT role FROM TG_Bot_Stager.users "
+                    f"WHERE telegram_id = {tg_id}")
 
         if list(self.make_query(qry))[0][0] == role:
             return True
@@ -95,8 +95,8 @@ class DBManager(AbstractDBManager):
         tg_id = int(message.from_user.id)
 
         qry: str = (f"SELECT telegram_id FROM "
-                    f"handy-digit-312214.TG_Bot_Stager."
-                    f"users WHERE telegram_id = {tg_id} AND"
+                    f"TG_Bot_Stager.users "
+                    f"WHERE telegram_id = {tg_id} AND"
                     f" is_confirmed = false")
         return len(list(self.make_query(qry))) != 0
 
@@ -117,7 +117,7 @@ class DBManager(AbstractDBManager):
         email = message.text
         date = str(datetime.now().today())
         query: str = (
-            f"INSERT INTO handy-digit-312214.TG_Bot_Stager.users"
+            f"INSERT INTO TG_Bot_Stager.users"
             f"(telegram_id, telegram_name, email, registration_code, "
             f"is_confirmed, regiestred_at, is_active, role)"
             f" VALUES ({tg_id}, '{tg_name}', '{email}', "
@@ -141,7 +141,7 @@ class DBManager(AbstractDBManager):
 
         tg_id: int = message.from_user.id
         secret_key: str = message.text
-        query: str = (f"UPDATE handy-digit-312214.TG_Bot_Stager.users"
+        query: str = (f"UPDATE TG_Bot_Stager.users"
                       f" SET is_confirmed = true ,"
                       f" registration_code = '{secret_key}'"
                       f" WHERE telegram_id = {tg_id}")
@@ -161,7 +161,7 @@ class DBManager(AbstractDBManager):
 
         tg_id: int = user_id
         query: str = (
-            f"UPDATE handy-digit-312214.TG_Bot_Stager.users"
+            f"UPDATE TG_Bot_Stager.users"
             f" SET is_active = false"
             f" WHERE telegram_id = {tg_id}"
         )
@@ -184,7 +184,7 @@ class DBManager(AbstractDBManager):
 
         tg_id: int = user_id
         query: str = (
-            f"UPDATE handy-digit-312214.TG_Bot_Stager.users"
+            f"UPDATE TG_Bot_Stager.users"
             f" SET is_active = true"
             f" WHERE telegram_id = {tg_id}"
         )
@@ -207,7 +207,7 @@ class DBManager(AbstractDBManager):
 
         tg_id: int = message.from_user.id
         query: str = (
-            f"SELECT telegram_id FROM handy-digit-312214.TG_Bot_Stager."
+            f"SELECT telegram_id FROM TG_Bot_Stager."
             f"users WHERE telegram_id = {tg_id} AND is_active = false"
         )
 
@@ -234,7 +234,7 @@ class DBManager(AbstractDBManager):
         """
 
         query: str = (
-            f"INSERT INTO handy-digit-312214.TG_Bot_Stager.remind_msg"
+            f"INSERT INTO TG_Bot_Stager.remind_msg"
             f"(telegram_id, message_text, planned_at, is_sent, created_at)"
             f" VALUES ({user_id}, '{message_text}', '{planned_at}', {True},"
             f"'{created_at}')"
@@ -260,7 +260,7 @@ class DBManager(AbstractDBManager):
 
         query: str = (
             f"SELECT * FROM "
-            f"handy-digit-312214.TG_Bot_Stager.remind_msg WHERE "
+            f"TG_Bot_Stager.remind_msg WHERE "
             f"planned_at = DATETIME({planned_at.year}, {planned_at.month}, "
             f"{planned_at.day}, {planned_at.hour},{planned_at.minute}, 0) "
         )
@@ -338,7 +338,7 @@ class DBManager(AbstractDBManager):
         """
 
         query: str = (f"SELECT * FROM "
-                      f"handy-digit-312214.TG_Bot_Stager.faq_datas "
+                      f"TG_Bot_Stager.faq_datas "
                       f"WHERE key ='{faq_key}'")
         try:
             return list(self.make_query(query))[0][3]
@@ -361,7 +361,7 @@ class DBManager(AbstractDBManager):
         """
 
         query: str = (f"SELECT question, role, key "
-                      f"FROM handy-digit-312214.TG_Bot_Stager.faq_datas "
+                      f"FROM TG_Bot_Stager.faq_datas "
                       f"WHERE key LIKE '{faq_category}%' "
                       f"AND (role LIKE CONCAT('%', (SELECT role "
                       f"FROM handy-digit-312214.TG_Bot_Stager.users "
@@ -396,7 +396,7 @@ class DBManager(AbstractDBManager):
         """
 
         query: str = (
-            f"INSERT INTO handy-digit-312214.TG_Bot_Stager.salary_response"
+            f"INSERT INTO TG_Bot_Stager.salary_response"
             f"(mailing_date, telegram_id, message_id, salary_period)"
             f"VALUES ('{mailing_date.strftime('%Y-%m-%d %H:%M:%S')}',"
             f"{user_id}, "
@@ -437,7 +437,7 @@ class DBManager(AbstractDBManager):
 
         if response_comment:
             query: str = (
-                f"UPDATE handy-digit-312214.TG_Bot_Stager.salary_response "
+                f"UPDATE TG_Bot_Stager.salary_response "
                 f"SET is_confirmed = {is_confirmed},"
                 f"response_comment = '{response_comment}',"
                 f"confirmed_at = "
@@ -448,7 +448,7 @@ class DBManager(AbstractDBManager):
 
         else:
             query: str = (
-                f"UPDATE handy-digit-312214.TG_Bot_Stager.salary_response "
+                f"UPDATE TG_Bot_Stager.salary_response "
                 f"SET is_confirmed = {is_confirmed}, "
                 f"confirmed_at = "
                 f"'{confirmed_at.strftime('%Y-%m-%d %H:%M:%S')}'"
@@ -526,8 +526,8 @@ class DBManager(AbstractDBManager):
 
         query = (
             "SELECT DISTINCT telegram_id FROM"
-            " handy-digit-312214.TG_Bot_Stager.users"
-            " WHERE is_confirmed is true"
+            "TG_Bot_Stager.users"
+            "WHERE is_confirmed is true"
         )
         try:
             result = list(self.make_query(query=query))
