@@ -10,6 +10,7 @@ def is_day_off(date: datetime.date) -> bool:
     :param date: проверяемая дата
     :type date: datetime.date
 
+    :return: True or False
     :rtype: bool
     """
 

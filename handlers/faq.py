@@ -5,11 +5,17 @@ from filters import IsRegistered
 from loader import dp
 
 
-async def send_keyboard(faq_category, call):
+async def send_keyboard(faq_category: str, call: CallbackQuery) -> None:
     """
     Удаляет прежнее сообщение и выводит выбранное меню вопросов
+
     :param call: объект CallbackQuery
+    :type call: CallbackQuery
     :param faq_category: категория вопроса
+    :type faq_category: str
+
+    :return: None
+    :rtype: NoneType
     """
     keyboard = key.collect_keyboard(faq_category, call.from_user.id, key.bck)
 
@@ -23,71 +29,107 @@ async def send_keyboard(faq_category, call):
     IsRegistered(),
     commands=['faq'],
     state="*")
-async def start_category(message: Message):
+async def start_category(message: Message) -> None:
     """
     Выводит стартовое меню FAQ
-    :param message: сообщение
+
+    :param message: объект Message
+    :type message : Message
+
+    :return: None
+    :rtype: NoneType
     """
     await message.answer(text="Выберите раздел: ",
                          reply_markup=key.category_kb)
 
 
 @dp.callback_query_handler(text=key.FaqKeyboard.FIN_STR.value)
-async def fin_questions(call: CallbackQuery):
+async def fin_questions(call: CallbackQuery) -> None:
     """
     Выводит меню вопросов категории Финансы
+
     :param call: объект CallbackQuery
+    :type call : CallbackQuery
+
+    :return: None
+    :rtype: NoneType
     """
 
     await send_keyboard('FIN', call)
 
 
 @dp.callback_query_handler(text=key.FaqKeyboard.ORG_STR.value)
-async def org_questions(call: CallbackQuery):
+async def org_questions(call: CallbackQuery) -> None:
     """
     Выводит меню вопросов категории Организация
+
     :param call: объект CallbackQuery
+    :type call : CallbackQuery
+
+    :return: None
+    :rtype: NoneType
     """
 
     await send_keyboard('ORG', call)
 
 
 @dp.callback_query_handler(text=key.FaqKeyboard.OT_STR.value)
-async def oth_questions(call: CallbackQuery):
+async def oth_questions(call: CallbackQuery) -> None:
     """
     Выводит меню вопросов категории Прочее
+
     :param call: объект CallbackQuery
+    :type call : CallbackQuery
+
+    :return: None
+    :rtype: NoneType
     """
 
     await send_keyboard('ANO', call)
 
 
 @dp.callback_query_handler(text=key.FaqKeyboard.ACC_STR.value)
-async def acc_questions(call: CallbackQuery):
+async def acc_questions(call: CallbackQuery) -> None:
     """
     Выводит меню вопросов категории Бухгалтерия
+
     :param call: объект CallbackQuery
+    :type call : CallbackQuery
+
+    :return: None
+    :rtype: NoneType
     """
 
     await send_keyboard('ACC', call)
 
 
 @dp.callback_query_handler(text=key.FaqKeyboard.TECH_STR.value)
-async def tech_questions(call: CallbackQuery):
+async def tech_questions(call: CallbackQuery) -> None:
     """
     Выводит меню вопросов категории Тех часть
+
     :param call: объект CallbackQuery
+    :type call : CallbackQuery
+
+    :return: None
+    :rtype: NoneType
     """
 
     await send_keyboard('TDP', call)
 
 
 @dp.callback_query_handler(text=key.FaqKeyboard.BCK_STR.value)
-async def bck_to_category(call: CallbackQuery):
+async def bck_to_category(call: CallbackQuery) -> None:
     """
     Выводит стартовое меню категорий
+
     :param call: объект CallbackQuery
+    :type call : CallbackQuery
+
+    :return: None
+    :rtype: NoneType
     """
+
     await call.message.delete()
 
     await call.message.answer("Выберите раздел: ",
@@ -95,10 +137,15 @@ async def bck_to_category(call: CallbackQuery):
 
 
 @dp.callback_query_handler(text=key.FaqKeyboard.UP_STR.value)
-async def up_to_category(call: CallbackQuery):
+async def up_to_category(call: CallbackQuery) -> None:
     """
     Выводит стартовое меню категорий
+
     :param call: объект CallbackQuery
+    :type call : CallbackQuery
+
+    :return: None
+    :rtype: NoneType
     """
 
     await call.message.answer("Выберите раздел: ",

@@ -26,11 +26,17 @@ inline_timepicker = InlineTimepicker()
     state="*")
 async def create_event_start(message: Message) -> None:
     """
-    Перехватывает сообщение с командой /create_event
+    Перехватывает команду create_event
     Устанавливает стейт event_name
     Спрашивает у пользователя название события
-    :param message: сообщение
+
+    :param message: объект Message
+    :type message : Message
+
+    :return: None
+    :rtype: NoneType
     """
+
     await CreateEventForm.event_name.set()
     await message.reply("Привет!\nУкажите название события или нажмите "
                         "/f для введения текста события целиком")
@@ -39,10 +45,16 @@ async def create_event_start(message: Message) -> None:
 @dp.message_handler(IsRegistered(), commands=["f"], state="*")
 async def parse_event_start(message: Message) -> None:
     """
-    Срабатывает на команду /f и выводит сообщение с
+    Перехватывает команду f и выводит сообщение с
     просьбой ввести пользователя текст события целиком
-    :param message: сообщение
+
+    :param message: объект Message
+    :type message : Message
+
+    :return: None
+    :rtype: NoneType
     """
+
     await CreateEventForm.event_text.set()
     await message.reply("Введите сообщение через пробел как в примере: "
                         "\nДень рождения 21/02/2022 15:00 Купить торт")
@@ -53,8 +65,14 @@ async def set_event_text(message: Message, state: FSMContext) -> None:
     """
     Парсит сообщение пользователя и извлекает из него
     названия, дату, время события и комментарий
-    :param message: сообщение
-    :param state: стейт
+
+    :param message: объект Message
+    :type message : Message
+    :param state: объект FSMContext
+    :type state : FSMContext
+
+    :return: None
+    :rtype: NoneType
     """
     try:
         event_date = re.search(r"(?:0?[1-9]|[12][0-9]|3[01])/"
@@ -99,9 +117,16 @@ async def set_event_name(message: Message, state: FSMContext) -> None:
     Записывает название события в state.proxy() по ключу "event_name"
     Устанавливает следующее значение стейта event_date
     Просит у пользователя выбрать дату и выводит календарик
-    :param message: сообщение
-    :param state: стейт
+
+    :param message: объект Message
+    :type message : Message
+    :param state: объект FSMContext
+    :type state : FSMContext
+
+    :return: None
+    :rtype: NoneType
     """
+
     async with state.proxy() as data:
         data["event_name"] = message.text
 
@@ -128,9 +153,15 @@ async def set_event_date(
     Записывает значение нажатой кнопки в state.proxy() по ключу "event_date"
     Устанавливает следующее значение стейта event_time
     Просит у пользователя написать время
-    :param callback_query: callback_query
-    :param callback_data: callback_data
-    :param state: стейт
+
+    :param message: объект Message
+    :type message : Message
+    :param callback_data: словарь для значений даты
+    :param state: объект FSMContext
+    :type state : FSMContext
+
+    :return: None
+    :rtype: NoneType
     """
 
     inline_timepicker.init(
@@ -175,9 +206,16 @@ async def set_event_time(callback_query: CallbackQuery,
     Записывает значение нажатой кнопки в state.proxy() по ключу "event_time"
     Устанавливает следующее значение стейта event_comment
     Просит у пользователя написать комментарий
+
     :param callback_query: объект CallbackQuery
+    :type message : CallbackQuery
     :param callback_data: словарь для временных значений
+    :type callback_data: dict
     :param state: объект FSMContext
+    :type state : FSMContext
+
+    :return: None
+    :rtype: NoneType
     """
 
     await callback_query.answer()
@@ -231,9 +269,16 @@ async def set_event_comment(message: Message, state: FSMContext) -> None:
     Перехватывает комментарий со стейтом event_comment
     Записывает в state.proxy() комментарий по ключу "event_comment"
     Спрашивает у пользователя будет ли это событие персональным
-    :param message: сообщение
-    :param state: стейт
+
+    :param message: объект Message
+    :type message : Message
+    :param state: объект FSMContext
+    :type state : FSMContext
+
+    :return: None
+    :rtype: NoneType
     """
+
     async with state.proxy() as data:
         data["event_comment"] = message.text
 
@@ -247,8 +292,14 @@ async def set_event_status(message: Message, state: FSMContext) -> None:
     Перехватывает комментарий со стейтом event_status
     Записывает в state.proxy() комментарий по ключу "event_status"
     Спрашивает у пользователя подтверждение на создание события
-    :param message: сообщение
-    :param state: стейт
+
+    :param message: объект Message
+    :type message : Message
+    :param state: объект FSMContext
+    :type state : FSMContext
+
+    :return: None
+    :rtype: NoneType
     """
 
     if message.text.lower() in {"да", "нет"}:
@@ -282,9 +333,16 @@ async def set_event_confirm(message: Message, state: FSMContext) -> None:
     Перехватывает комментарий со стейтом event_confirm
     Проверяет корректность ответа
     Создаёт запись в set_scheduler в случае положительного ответа
-    :param message: сообщение
-    :param state: стейт
+
+    :param message: объект Message
+    :type message : Message
+    :param state: объект FSMContext
+    :type state : FSMContext
+
+    :return: None
+    :rtype: NoneType
     """
+
     if message.text.lower() in {"да", "нет"}:
         async with state.proxy() as data:
             if message.text.lower() == "да":
@@ -313,8 +371,14 @@ async def set_event_confirm(message: Message, state: FSMContext) -> None:
 def date_check(date: datetime) -> bool:
     """
     Функция для проверки времени, даты
+
     :param date: дата
+    :type: datetime
+
+    :return: true or False
+    :rtype: bool
     """
+
     date_now = datetime.datetime.now()
     if date.time() == datetime.time(hour=0, minute=0):
         return date.date() >= date_now.date()

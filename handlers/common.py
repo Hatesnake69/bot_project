@@ -10,7 +10,20 @@ from loader import dp
 
 
 @dp.message_handler(commands=["start"], state="*")
-async def process_start_command(message: Message, state: FSMContext):
+async def process_start_command(message: Message, state: FSMContext) -> None:
+    """
+    Перехватывает команду start и выводит
+    приветственное сообщение
+
+    :param message: объект Message
+    :type message : Message
+    :param state: объект FSMContext
+    :type state : FSMContext
+
+    :return: None
+    :rtype: NoneType
+    """
+
     await message.answer("Добро пожаловать в чат Бот компании Ylab. Для "
                          "регистрации в Боте введите команду /reg, "
                          "или /help для получения списка доступных команд.")
@@ -18,7 +31,20 @@ async def process_start_command(message: Message, state: FSMContext):
 
 
 @dp.message_handler(commands=["help"], state="*")
-async def process_help_command(message: Message, state: FSMContext):
+async def process_help_command(message: Message, state: FSMContext) -> None:
+    """
+    Перехватывает команду help и выводит
+    список доступных команд
+
+    :param message: объект Message
+    :type message : Message
+    :param state: объект FSMContext
+    :type state : FSMContext
+
+    :return: None
+    :rtype: NoneType
+    """
+
     await message.answer("Здесь будет список доступных команды:\n"
                          "/reg - регистрация в боте;\n"
                          "/search - поиск зарегистрированных пользователей;\n"
@@ -30,7 +56,20 @@ async def process_help_command(message: Message, state: FSMContext):
 
 
 @dp.message_handler(commands=["cancel"], state="*")
-async def cmd_cancel(message: Message, state: FSMContext):
+async def cmd_cancel(message: Message, state: FSMContext) -> None:
+    """
+    Перехватывает команду cancel и
+    сбрасывает стейт
+
+    :param message: объект Message
+    :type message : Message
+    :param state: объект FSMContext
+    :type state : FSMContext
+
+    :return: None
+    :rtype: NoneType
+    """
+
     await state.finish()
     await message.answer("Действие отменено",
                          reply_markup=ReplyKeyboardRemove())

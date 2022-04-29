@@ -18,10 +18,17 @@ class ThrottlingMiddleware(BaseMiddleware):
             data: dict,
     ) -> None:
         """
-        This handler is called when dispatcher receives a message
+        Этот хэндлер вызывается когда диспетчер получает сообщение
 
-        :param message:
+        :param message: объект Message
+        :type message: Message
+        :param data: данные пользователя
+        :type data: dict
+
+        :return: None
+        :rtype: NoneType
         """
+
         data = await cache.get_data(
             user=message.from_user.id,
             chat=message.chat.id

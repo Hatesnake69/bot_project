@@ -17,10 +17,21 @@ from states import RegStates
 
 async def tracker(message: Message, key: str, state: FSMContext) -> None:
     """
-        Функция проверяет количество вводов email и паролей пользователем
+    Функция проверяет количество вводов email и паролей пользователем
     и в случае превышения лимита в 3 ед. создает в редисе запись
     с ключом 'black_list' со значением True.
+
+    :param message: объект Message
+    :type message : Message
+    :param key: ключ пользователя
+    :type key : str
+    :param state: FSMContext
+    :type state : объект FSMContext
+
+    :return: None
+    :rtype: NoneType
     """
+
     limit: int = 3
     chat_id: int = message.chat.id
     user_id: int = message.from_user.id
@@ -40,7 +51,18 @@ async def tracker(message: Message, key: str, state: FSMContext) -> None:
 
 
 @dp.message_handler(commands=["reg"], state="*")
-async def process_reg_command(message: Message):
+async def process_reg_command(message: Message) -> None:
+    """
+    Функция проверяет зарегистрирован ли пользователь и
+    отправляет приветственное сообщение
+
+    :param message: объект Message
+    :type message : Message
+
+    :return: None
+    :rtype: NoneType
+    """
+
     check_user = await manager.check_user(message=message)
     if check_user:
         await message.answer(
@@ -57,6 +79,19 @@ async def process_reg_command(message: Message):
 
 @dp.message_handler(state=RegStates.EMAIL_MESSAGE)
 async def send_email_message(message: Message, state: FSMContext) -> None:
+    """
+    Функция отправляет на почту код подтверждения
+    пользователю и сообщение в чат для его ввода
+
+    :param message: объект Message
+    :type message : Message
+    :param state: объект FSMContext
+    :type state : FSMContext
+
+    :return: None
+    :rtype: NoneType
+    """
+
     await tracker(message=message, key='email_try', state=state)
 
     secret_key: str = secrets.token_urlsafe(8)
@@ -92,6 +127,19 @@ async def send_email_message(message: Message, state: FSMContext) -> None:
 
 @dp.message_handler(state=RegStates.KEY_MESSAGE)
 async def input_key_message(message: Message, state: FSMContext) -> None:
+    """
+    Функция проверяет введённый ключ и отправляет
+    пользователю сообщение с результатом проверки
+
+    :param message: объект Message
+    :type message : Message
+    :param state: объект FSMContext
+    :type state : FSMContext
+
+    :return: None
+    :rtype: NoneType
+    """
+
     await tracker(message=message, key='password_try', state=state)
     secret_key: dict = await cache.get_data(
         chat=message.chat.id,
