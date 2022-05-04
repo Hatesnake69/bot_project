@@ -30,12 +30,6 @@ def sending_message(to_email: str, secret_key: str) -> None:
             template_new = Template(
                 mail_template.read()
             ).render(secret_key=secret_key)
-            with open("index.html", "w") as f:
-                f.write(template_new)
-    except IOError:
-        logger.error("Шаблон не найден")
-
-    try:
         msg = MIMEMultipart()
         msg["From"] = FROM_EMAIL
         msg["To"] = to_email
@@ -49,3 +43,5 @@ def sending_message(to_email: str, secret_key: str) -> None:
         server.quit()
     except SMTPDataError:
         pass
+    except Exception as e:
+        logger.error(e)
