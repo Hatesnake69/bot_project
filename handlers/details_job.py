@@ -1,19 +1,19 @@
 import re
 
-import pandas as pd
+from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
-from aiogram.types import (
-    CallbackQuery,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    Message,
-)
+from aiogram.types import CallbackQuery, Message
+from pandas import read_json
 
 from data import cache
 from filters import IsRegistered
-from loader import db_manager, dp
+from keyboards import DrawKeyboardsPeriods
+from loader import bot, db_manager, dp
 from services import save_graph
 from utils import constants
+
+draw_kb = DrawKeyboardsPeriods()
+COUNT_PERIODS_PAGE: int = 3
 
 
 async def get_menu_salary_period(message: Message) -> dict:
@@ -34,13 +34,12 @@ async def get_menu_salary_period(message: Message) -> dict:
             user=message.from_user.id, chat=message.chat.id
         )
         salary_periods = data["salary_periods"]
-        return pd.read_json(salary_periods)
+        return read_json(salary_periods)
 
     except KeyError:
         df_iterable = db_manager.get_salary_periods_user(
             message.from_user.id
         ).to_dataframe_iterable()
-
         for salary_periods in df_iterable:
             df_json = salary_periods.to_json()
         await cache.update_data(
@@ -71,9 +70,8 @@ def sort_salary_periods(salary_periods: list) -> list:
                 str_period = re.sub(month, f" {key} ", period)
                 periods.append(str_period.split())
                 continue
-
-    sort_periods = sorted(periods, key=lambda p: (-int(p[2]), -int(p[1])))
-
+    sort_periods = sorted(periods,
+                          key=lambda p: (-int(p[2]), -int(p[1]), len(p[0])))
     return [f"{period[0]}{constants.MONTHS[int(period[1])]}{period[2]}"
             for period in sort_periods
             ]
@@ -82,12 +80,15 @@ def sort_salary_periods(salary_periods: list) -> list:
 @dp.message_handler(
     IsRegistered(), Text(equals=["/details_job"]), commands=["details_job"]
 )
-async def print_menu_salary_period(message: Message) -> None:
+async def print_menu_salary_period(message: Message,
+                                   state: FSMContext) -> None:
     """
     Создает запрос в БД об имеющихся ЗП и формирует меню
 
     :param message: объект Message
     :type message: Message
+    :param state: объект FSMContext
+    :type state: FSMContext
 
     :return: None
     :rtype: NoneType
@@ -105,13 +106,17 @@ async def print_menu_salary_period(message: Message) -> None:
     if df.empty:
         await message.answer("У вас нет доступных периодов")
     else:
-        periods = sort_salary_periods(list(df.value))
-        kb_periods = InlineKeyboardMarkup()
+        periods: list = sort_salary_periods(list(set(df.value)))
+        count_periods: int = len(periods)
 
-        for period in periods:
-            kb_periods.add(
-                InlineKeyboardButton(text=period, callback_data=f"p{period}")
-            )
+        async with state.proxy() as data:
+            data["periods"] = periods
+
+        if count_periods <= COUNT_PERIODS_PAGE:
+            kb_periods = draw_kb.draw_periods(periods, 0, count_periods)
+        else:
+            kb_periods = draw_kb.draw_extra_kb(periods, 0, COUNT_PERIODS_PAGE,
+                                               "yaers_all_kb")
 
         await message.answer("Выберите период: ", reply_markup=kb_periods)
 
@@ -134,11 +139,148 @@ async def send_graph(call: CallbackQuery) -> None:
 
     for df in df_iterable:
         if not df.empty:
-            save_graph(df)
+            img = save_graph(df)
             await call.bot.send_photo(
                 call.from_user.id,
-                open("saved_graph.png", "rb"),
+                img,
                 caption=call.data[1:]
             )
+            await bot.delete_message(chat_id=call.from_user.id,
+                                     message_id=call.message.message_id)
         else:
             await call.answer("Заданный период не найден")
+
+
+@dp.callback_query_handler(lambda c: c.data == "Periods")
+async def get_years(call: CallbackQuery, state: FSMContext) -> None:
+    """
+    Формирует список кнопок по годам
+
+    :param call: объект CallbackQuery
+    :type call: CallbackQuery
+    :param state: объект FSMContext
+    :type state: FSMContext
+
+    :return: None
+    :rtype: NoneType
+
+    """
+    async with state.proxy() as data:
+        periods = data["periods"]
+
+    years: set = set(map(lambda period: f"20{period[-2::]}", periods))
+
+    kb_years = draw_kb.draw_years(years=years)
+
+    await bot.delete_message(chat_id=call.from_user.id,
+                             message_id=call.message.message_id)
+    await call.message.answer("Выберите год: ", reply_markup=kb_years)
+
+
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith("year"))
+async def get_periods_of_year(call: CallbackQuery, state: FSMContext) -> None:
+    """
+    Формирует список с периодами по выбраному году
+    :param call: объект CallbackQuery
+    :type call: CallbackQuery
+    :param state: объект FSMContext
+    :type state: FSMContext
+
+    :return: None
+    :rtype: NoneType
+
+    """
+    year: str = call.data[-2::]
+    async with state.proxy() as data:
+        periods = data["periods"]
+
+    periods_yaer: list = [period for period in periods if period[-2::] == year]
+    count_periods: int = len(periods_yaer)
+
+    if count_periods <= COUNT_PERIODS_PAGE:
+        kb_periods = draw_kb.draw_periods(periods_yaer, 0, count_periods)
+    else:
+        kb_periods = draw_kb.draw_extra_kb(periods_yaer, 0, COUNT_PERIODS_PAGE,
+                                           "yaers_all_kb", "next_kb")
+        async with state.proxy() as data:
+            data["periods_yaer"] = periods_yaer
+            data["period_index"] = COUNT_PERIODS_PAGE
+
+    await bot.delete_message(chat_id=call.from_user.id,
+                             message_id=call.message.message_id)
+    await call.message.answer("Выберите период: ", reply_markup=kb_periods)
+
+
+@dp.callback_query_handler(lambda c: c.data == "Next")
+async def get_next_page(call: CallbackQuery, state: FSMContext) -> None:
+    """
+    Функция формирует следующую страницу с периодами
+    :param call: объект CallbackQuery
+    :type call: CallbackQuery
+    :param state: объект FSMContext
+    :type state: FSMContext
+
+    :return: None
+    :rtype: NoneType
+
+    """
+
+    async with state.proxy() as data:
+        periods_yaer = data["periods_yaer"]
+        period_index = data["period_index"]
+
+    count_periods: int = len(periods_yaer) - period_index
+
+    if count_periods > COUNT_PERIODS_PAGE:
+        stop = period_index + COUNT_PERIODS_PAGE
+        kb_periods = draw_kb.draw_extra_kb(periods_yaer, period_index, stop,
+                                           "back_kb", "next_kb")
+
+    elif count_periods <= COUNT_PERIODS_PAGE:
+        stop = period_index + count_periods
+        kb_periods = draw_kb.draw_extra_kb(periods_yaer, period_index, stop,
+                                           "back_kb")
+
+    async with state.proxy() as data:
+        data["period_index"] += COUNT_PERIODS_PAGE
+
+    await bot.delete_message(chat_id=call.from_user.id,
+                             message_id=call.message.message_id)
+
+    await call.message.answer("Выберите период: ", reply_markup=kb_periods)
+
+
+@dp.callback_query_handler(lambda c: c.data == "Back")
+async def get_back_page(call: CallbackQuery, state: FSMContext) -> None:
+    """
+    Функция возращает на предыдущую страницу с периодами
+    :param call: объект CallbackQuery
+    :type call: CallbackQuery
+    :param state: объект FSMContext
+    :type state: FSMContext
+
+    :return: None
+    :rtype: NoneType
+    """
+    async with state.proxy() as data:
+
+        periods_yaer = data["periods_yaer"]
+        period_index = data["period_index"]
+
+    start: int = period_index - 2 * COUNT_PERIODS_PAGE
+    stop: int = period_index - COUNT_PERIODS_PAGE
+
+    if start > 0:
+        kb_periods = draw_kb.draw_extra_kb(periods_yaer, start, stop,
+                                           "back_kb", "next_kb")
+
+    elif start <= 0:
+        kb_periods = draw_kb.draw_extra_kb(periods_yaer, start, stop,
+                                           "yaers_all_kb", "next_kb")
+
+    async with state.proxy() as data:
+        data["period_index"] -= COUNT_PERIODS_PAGE
+
+    await bot.delete_message(chat_id=call.from_user.id,
+                             message_id=call.message.message_id)
+    await call.message.answer("Выберите период: ", reply_markup=kb_periods)

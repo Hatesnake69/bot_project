@@ -14,19 +14,19 @@ from utils import get_logger
 log = get_logger(__name__)
 
 
-def save_graph(df) -> None:
+def save_graph(df) -> bytes:
     """
     Функция принимает DataFrame, формирует ось Х и сохраняет график.
 
     :param df: DataFrame пользователя по зарплатному периоду
     :type df: DataFrame
 
-    :return: None
-    :rtype: NoneType
+    :return: Возвращет график
+    :rtype: bytes
     """
 
     labels = get_xlabel_for_graph(df)
-    get_image(df, labels)
+    return get_image(df, labels)
 
 
 async def send_graph_to_all() -> None:
@@ -49,11 +49,10 @@ async def send_graph_to_all() -> None:
             dataframe = df.loc[df.telegram_id == user_id].sort_values(
                  by=['trackdate']
              )
-            save_graph(dataframe)
             try:
                 caption = salary_period
                 msg = await bot.send_photo(
-                    user_id, open("saved_graph.png", "rb"), caption=caption
+                    user_id, save_graph(dataframe), caption=caption
                 )
                 message_id = msg.message_id
                 db_manager.send_confirm_for_salaryperiod(
