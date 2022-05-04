@@ -94,7 +94,10 @@ acc = InlineKeyboardButton(text=FaqKeyboard.ACC_STR,
 
 accept = InlineKeyboardButton(text="Согласиться", callback_data='kb1')
 refuse = InlineKeyboardButton(text="Отказаться", callback_data='kb0')
+confirm = InlineKeyboardButton(text="Да", callback_data='Да')
+dn_confirm = InlineKeyboardButton(text="Нет", callback_data='Нет')
 
 category_kb = InlineKeyboardMarkup(row_width=1).add(fin, org, acc, tech, oth)
 up_kb = InlineKeyboardMarkup(row_width=1).add(up)
 confirmed_kb = InlineKeyboardMarkup(row_width=2).add(accept, refuse)
+yn_kb = InlineKeyboardMarkup(row_width=2).add(confirm, dn_confirm)
