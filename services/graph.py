@@ -1,6 +1,6 @@
+from io import BytesIO
 import pandas.core.series
-import datetime
-from matplotlib.pyplot import figure, savefig
+from matplotlib.pyplot import figure
 from numpy import arange
 from pandas import DataFrame, date_range, to_datetime
 from seaborn import histplot
@@ -9,7 +9,7 @@ from seaborn import histplot
 from utils import constants
 
 
-def get_salary_period(today: datetime.date) -> str:
+def get_salary_period(today) -> str:
     """
     Формирует строку зарплатного периода.
 
@@ -25,9 +25,9 @@ def get_salary_period(today: datetime.date) -> str:
     year: str = today.strftime("%y")
 
     if day < 6 or day > 20:
-        salary_period = f"ЗП-{constants.MONTHS[month]}{year}"
-    else:
         salary_period = f"Аванс-{constants.MONTHS[month]}{year}"
+    else:
+        salary_period = f"ЗП-{constants.MONTHS[month]}{year}"
     return salary_period
 
 
@@ -55,7 +55,7 @@ def get_xlabel_for_graph(df: [DataFrame]) -> DataFrame:
     return df_xlabel.xticklabels
 
 
-def get_image(df: DataFrame, xlabel: [pandas.core.series.Series]) -> None:
+def get_image(df: DataFrame, xlabel: [pandas.core.series.Series]) -> bytes:
     """
     Формирует и сохраняет картинку с графиком.
 
@@ -64,8 +64,8 @@ def get_image(df: DataFrame, xlabel: [pandas.core.series.Series]) -> None:
     :param xlabel: набор данных для подписи тиков по оси Х
     :type xlabel: pandas.core.series.Series
 
-    :return: None
-    :rtype: NoneType
+    :return: Возвращет график
+    :rtype: bytes
     """
 
     fig = figure(figsize=(16, 8))
@@ -79,7 +79,11 @@ def get_image(df: DataFrame, xlabel: [pandas.core.series.Series]) -> None:
     )
 
     mids = [rect.get_x() + rect.get_width() / 2 for rect in graph.patches]
-    graph.set_xticks(list(set(mids)))
+
+    x_label_mids = list(set(mids))
+    x_label_mids.sort()
+
+    graph.set_xticks(x_label_mids)
     graph.set_xticklabels(xlabel.tolist())
 
     max_hour: int = max(df.groupby(["trackdate"])["time"].sum())
@@ -90,4 +94,11 @@ def get_image(df: DataFrame, xlabel: [pandas.core.series.Series]) -> None:
 
     fig.autofmt_xdate()
 
-    savefig("saved_graph.png")
+    # Сохранение в буфер
+
+    buffer = BytesIO()
+    fig.savefig(buffer, format='png')
+    buffer.seek(0)
+    image_png = buffer.getvalue()
+    buffer.close()
+    return image_png
