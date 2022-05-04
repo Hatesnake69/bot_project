@@ -43,6 +43,87 @@ class FaqKeyboard(str, enum.Enum):
     ACC_Q2_STR = "Когда придут отпускные?"
 
 
+class DrawKeyboardsPeriods:
+    """
+    Данный класс формирует кнопки для ЗП
+
+    """
+
+    extra_kb: dict = {
+        "next_kb": InlineKeyboardButton(text="Вперед >>",
+                                        callback_data="Next"),
+        "back_kb": InlineKeyboardButton(text="<< Назад", callback_data="Back"),
+        "yaers_all_kb": InlineKeyboardButton(text="Все периоды",
+                                             callback_data="Periods")
+    }
+
+    @staticmethod
+    def draw_years(years: list) -> InlineKeyboardMarkup:
+        """
+        Функция формирует кнопки с годами ЗП
+
+        :param years: список с годамим
+        :type years: list
+
+        :return: клавиатура с годами
+        :rtype: InlineKeyboardMarkup
+        """
+        kb_periods = InlineKeyboardMarkup()
+        for y in years:
+            kb_periods.add(
+                InlineKeyboardButton(text=y,
+                                     callback_data=f"year{y[-2::]}")
+            )
+        return kb_periods
+
+    @staticmethod
+    def draw_periods(
+            periods: list, start: int, stop: int
+    ) -> InlineKeyboardMarkup:
+        """
+        Функция формирует кнопки с периодами ЗП
+
+        :param periods: список с периодами
+        :type periods: list
+        :param start: начальный индекс
+        :type start: int
+        :param stop: последний индекс
+        :type stop: int
+
+        :return: клавиатура с годами
+        :rtype: InlineKeyboardMarkup
+        """
+        kb_periods = InlineKeyboardMarkup()
+        for i in range(start, stop):
+            kb_periods.add(
+                InlineKeyboardButton(text=periods[i],
+                                     callback_data=f"p{periods[i]}")
+            )
+        return kb_periods
+
+    def draw_extra_kb(
+            self, periods: list, start: int, stop: int, *args
+    ) -> InlineKeyboardMarkup:
+        """
+        Функция формирует дополнителные кнопки
+
+        :param periods: список с периодами
+        :type periods: list
+        :param start: начальный индекс
+        :type start: int
+        :param stop: последний индекс
+        :type stop: int
+
+        :return: клавиатура с годами
+        :rtype: InlineKeyboardMarkup
+        """
+        kb_periods = self.draw_periods(periods, start, stop)
+        if args:
+            buttons = [self.extra_kb[kb] for kb in args]
+            kb_periods.add(*buttons)
+            return kb_periods
+
+
 def collect_keyboard(faq_category: str,
                      user_id: int,
                      bck_button: InlineKeyboardButton) \
