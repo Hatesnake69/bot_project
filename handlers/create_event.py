@@ -291,7 +291,7 @@ async def set_event_comment(message: Message, state: FSMContext) -> None:
 @dp.callback_query_handler(state=CreateEventForm.event_status,
                            text=key.confirm.text)
 async def set_event_status_common(callback_query: CallbackQuery,
-                                   state: FSMContext) -> None:
+                                  state: FSMContext) -> None:
     """
    Перехватывает комментарий со стейтом event_status на кнопке "да"
    Спрашивает у пользователя подтверждение на создание события
@@ -327,7 +327,7 @@ async def set_event_status_common(callback_query: CallbackQuery,
 @dp.callback_query_handler(state=CreateEventForm.event_status,
                            text=key.dn_confirm.text)
 async def set_event_status_person(callback_query: CallbackQuery,
-                                     state: FSMContext) -> None:
+                                  state: FSMContext) -> None:
     """
   Перехватывает комментарий со стейтом event_status на кнопке "нет"
   Спрашивает у пользователя подтверждение на создание события
@@ -399,7 +399,7 @@ async def set_event_confirm(callback_query: CallbackQuery,
 @dp.callback_query_handler(state=CreateEventForm.event_confirm,
                            text=key.dn_confirm.text)
 async def set_event_not_created(callback_query: CallbackQuery,
-                              state: FSMContext) -> None:
+                                state: FSMContext) -> None:
     """
     Перехватывает комментарий со стейтом event_confirm на кнопке "нет"
     Отправляет сообщение что событие не создано
