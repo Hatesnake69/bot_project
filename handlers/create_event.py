@@ -102,7 +102,8 @@ async def set_event_text(message: Message, state: FSMContext) -> None:
 
                 await CreateEventForm.event_status.set()
 
-                await message.reply("Событие для всех? (да/нет)")
+                await message.reply("Событие для всех?",
+                                    reply_markup=key.yn_kb)
             else:
                 await message.reply("Нельзя выбирать дату и время раньше, "
                                     "чем сейчас")
