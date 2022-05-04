@@ -1,6 +1,7 @@
 import datetime
 import logging
 import re
+import keyboards as key
 
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardMarkup
@@ -154,8 +155,8 @@ async def set_event_date(
     Устанавливает следующее значение стейта event_time
     Просит у пользователя написать время
 
-    :param message: объект Message
-    :type message : Message
+    :param callback_query: объект Message
+    :type callback_query : Message
     :param callback_data: словарь для значений даты
     :param state: объект FSMContext
     :type state : FSMContext
@@ -208,7 +209,7 @@ async def set_event_time(callback_query: CallbackQuery,
     Просит у пользователя написать комментарий
 
     :param callback_query: объект CallbackQuery
-    :type message : CallbackQuery
+    :type callback_query : CallbackQuery
     :param callback_data: словарь для временных значений
     :type callback_data: dict
     :param state: объект FSMContext
@@ -283,18 +284,92 @@ async def set_event_comment(message: Message, state: FSMContext) -> None:
         data["event_comment"] = message.text
 
     await CreateEventForm.next()
-    await message.reply("Сделать событие для всех? (да/нет)")
+    await message.reply("Сделать событие для всех?",
+                        reply_markup=key.yn_kb)
 
 
-@dp.message_handler(state=CreateEventForm.event_status)
-async def set_event_status(message: Message, state: FSMContext) -> None:
+@dp.callback_query_handler(state=CreateEventForm.event_status,
+                           text=key.confirm.text)
+async def set_event_status_common(callback_query: CallbackQuery,
+                                  state: FSMContext) -> None:
     """
-    Перехватывает комментарий со стейтом event_status
-    Записывает в state.proxy() комментарий по ключу "event_status"
-    Спрашивает у пользователя подтверждение на создание события
+   Перехватывает комментарий со стейтом event_status на кнопке "да"
+   Спрашивает у пользователя подтверждение на создание события
 
-    :param message: объект Message
-    :type message : Message
+   :param callback_query: объект CallbackQuery
+   :type callback_query : CallbackQuery
+   :param state: объект FSMContext
+   :type state : FSMContext
+
+   :return: None
+   :rtype: NoneType
+   """
+
+    async with state.proxy() as data:
+        data["event_status"] = "Событие для всех"
+
+    await callback_query.message.answer(
+        text(
+            text(data["event_name"]),
+            text(data["event_date"]),
+            text(data["event_time"]),
+            text(data["event_comment"]),
+            text(data["event_status"]),
+            sep="\n",
+        ),
+    )
+
+    await CreateEventForm.next()
+    await callback_query.message.answer("Подтвердить?",
+                                        reply_markup=key.yn_kb)
+
+
+@dp.callback_query_handler(state=CreateEventForm.event_status,
+                           text=key.dn_confirm.text)
+async def set_event_status_person(callback_query: CallbackQuery,
+                                  state: FSMContext) -> None:
+    """
+  Перехватывает комментарий со стейтом event_status на кнопке "нет"
+  Спрашивает у пользователя подтверждение на создание события
+
+  :param callback_query: объект CallbackQuery
+  :type callback_query : CallbackQuery
+  :param state: объект FSMContext
+  :type state : FSMContext
+
+  :return: None
+  :rtype: NoneType
+  """
+
+    async with state.proxy() as data:
+        data["event_status"] = "Персональное событие"
+
+    await callback_query.message.answer(
+        text(
+            text(data["event_name"]),
+            text(data["event_date"]),
+            text(data["event_time"]),
+            text(data["event_comment"]),
+            text(data["event_status"]),
+            sep="\n",
+        ),
+    )
+
+    await CreateEventForm.next()
+    await callback_query.message.answer("Подтвердить?",
+                                        reply_markup=key.yn_kb)
+
+
+@dp.callback_query_handler(state=CreateEventForm.event_confirm,
+                           text=key.confirm.text)
+async def set_event_confirm(callback_query: CallbackQuery,
+                            state: FSMContext) -> None:
+    """
+    Перехватывает комментарий со стейтом event_confirm на кнопке "да"
+    Создаёт запись в set_scheduler
+
+    :param callback_query: объект CallbackQuery
+    :type callback_query : CallbackQuery
     :param state: объект FSMContext
     :type state : FSMContext
 
@@ -302,40 +377,35 @@ async def set_event_status(message: Message, state: FSMContext) -> None:
     :rtype: NoneType
     """
 
-    if message.text.lower() in {"да", "нет"}:
-        if message.text.lower() == "да":
-            async with state.proxy() as data:
-                data["event_status"] = "Событие для всех"
+    async with state.proxy() as data:
+        await callback_query.message.answer("Событие создано")
+        if data.get(
+                value="event_status",
+                default=None
+        ) == "Персональное событие":
+            user_id = callback_query.from_user.id
         else:
-            async with state.proxy() as data:
-                data["event_status"] = "Персональное событие"
-
-        await message.answer(
-            text(
-                text(data["event_name"]),
-                text(data["event_date"]),
-                text(data["event_time"]),
-                text(data["event_comment"]),
-                text(data["event_status"]),
-                sep="\n",
-            ),
+            user_id = CHAT_ID
+        set_scheduler_event(
+            user_id=user_id,
+            event=data["event_name"],
+            event_date=data["event_date"],
+            event_time=data["event_time"],
+            comment=data["event_comment"],
         )
-
-        await CreateEventForm.next()
-        await message.reply("Подтвердить? (да/нет)")
-    else:
-        await message.reply("Сделать событие для всех? (да/нет)")
+        await state.finish()
 
 
-@dp.message_handler(state=CreateEventForm.event_confirm)
-async def set_event_confirm(message: Message, state: FSMContext) -> None:
+@dp.callback_query_handler(state=CreateEventForm.event_confirm,
+                           text=key.dn_confirm.text)
+async def set_event_not_created(callback_query: CallbackQuery,
+                                state: FSMContext) -> None:
     """
-    Перехватывает комментарий со стейтом event_confirm
-    Проверяет корректность ответа
-    Создаёт запись в set_scheduler в случае положительного ответа
+    Перехватывает комментарий со стейтом event_confirm на кнопке "нет"
+    Отправляет сообщение что событие не создано
 
-    :param message: объект Message
-    :type message : Message
+    :param callback_query: объект CallbackQuery
+    :type callback_query : CallbackQuery
     :param state: объект FSMContext
     :type state : FSMContext
 
@@ -343,29 +413,10 @@ async def set_event_confirm(message: Message, state: FSMContext) -> None:
     :rtype: NoneType
     """
 
-    if message.text.lower() in {"да", "нет"}:
-        async with state.proxy() as data:
-            if message.text.lower() == "да":
-                await message.reply("Событие создано")
-                if data.get(
-                        value="event_status",
-                        default=None
-                ) == "Персональное событие":
-                    user_id = message.from_user.id
-                else:
-                    user_id = CHAT_ID
-                set_scheduler_event(
-                    user_id=user_id,
-                    event=data["event_name"],
-                    event_date=data["event_date"],
-                    event_time=data["event_time"],
-                    comment=data["event_comment"],
-                )
-            else:
-                await message.reply("Событие не создано")
+    async with state.proxy():
+        await callback_query.message.answer("Событие не создано")
+
         await state.finish()
-    else:
-        await message.reply("Подтвердить? (да/нет)")
 
 
 def date_check(date: datetime) -> bool:
