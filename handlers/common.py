@@ -30,28 +30,31 @@ async def process_start_command(message: Message, state: FSMContext) -> None:
     await state.finish()
 
 
+@dp.callback_query_handler(text=['/end_search'], state="*")
 @dp.message_handler(commands=["help"], state="*")
-async def process_help_command(message: Message, state: FSMContext) -> None:
+async def process_help_command(event, state: FSMContext) -> None:
     """
-    Перехватывает команду help и выводит
-    список доступных команд
+    Выводит список доступных команд бота
 
-    :param message: объект Message
-    :type message : Message
+    :param event: объект Message или CallbackQuery
+    :type event : Message или CallbackQuery
     :param state: объект FSMContext
     :type state : FSMContext
 
     :return: None
     :rtype: NoneType
     """
-
-    await message.answer("Здесь будет список доступных команды:\n"
-                         "/reg - регистрация в боте;\n"
-                         "/search - поиск зарегистрированных пользователей;\n"
-                         "/create_event - создание запланированной встречи;\n"
-                         "/details_job - информация о времени работы;\n"
-                         "/faq - часто задаваемые вопросы.\n"
-                         "/cancel - отмена текущей команды")
+    help_info = "Список доступных команды бота:\n" \
+                " /reg - регистрация в боте;\n" \
+                " /search - поиск зарегистрированных пользователей;\n" \
+                " /create_event - создание запланированной встречи;\n" \
+                "/details_job - информация о времени работы;\n" \
+                "/faq - часто задаваемые вопросы.\n" \
+                "/cancel - отмена текущей команды"
+    try:
+        await event.message.answer(help_info)
+    except AttributeError:
+        await event.answer(help_info)
     await state.finish()
 
 

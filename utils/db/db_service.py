@@ -472,7 +472,7 @@ class DBManager(AbstractDBManager):
         :rtype: bigquery.table.RowIterator
         """
 
-        query_data: str = f"""SELECT fullname, email, telegram_name
+        query_data: str = f"""SELECT DISTINCT fullname, email, telegram_name
                      FROM TG_Bot_Stager.dev_search_view \
                      WHERE fullname LIKE '%{parse_data['full_name'][0]}%' OR \
                      fullname LIKE '%{parse_data['full_name'][-1]}%' OR \
