@@ -25,9 +25,9 @@ def get_salary_period(today) -> str:
     year: str = today.strftime("%y")
 
     if day < 6 or day > 20:
-        salary_period = f"Аванс-{constants.MONTHS[month]}{year}"
-    else:
         salary_period = f"ЗП-{constants.MONTHS[month]}{year}"
+    else:
+        salary_period = f"Аванс-{constants.MONTHS[month]}{year}"
     return salary_period
 
 
