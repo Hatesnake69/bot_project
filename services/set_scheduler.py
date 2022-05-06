@@ -23,14 +23,15 @@ def set_scheduler_for_payday() -> None:
     :return: None
     :rtype: NoneType
     """
-
-    day: date = date.today()
+    today: date = date.today()
+    day: date = today
     while is_day_off(date=day):
         day += timedelta(days=1)
-    SCHEDULER.add_job(send_graph_to_all, "date", run_date=f"{day} 10:00:10")
+    SCHEDULER.add_job(send_graph_to_all, "date", run_date=f"{day} 10:00:10",
+                      args=(today, ))
 
 
-SCHEDULER.add_job(set_scheduler_for_payday, "cron", day="5,20", hour=10)
+SCHEDULER.add_job(set_scheduler_for_payday, "cron", day="6,21", hour=10)
 
 
 def set_scheduler_event(

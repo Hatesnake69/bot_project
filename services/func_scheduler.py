@@ -29,16 +29,19 @@ def save_graph(df) -> bytes:
     return get_image(df, labels)
 
 
-async def send_graph_to_all() -> None:
+async def send_graph_to_all(day: date) -> None:
     """
     Отправляет график пользователю и делает отметку в БД,
     если сообщение было успешно доставлено.
+
+    :param day: день запроса периода
+    :type : date
 
     :return: None
     :rtype: NoneType
     """
 
-    salary_period = get_salary_period(date.today())
+    salary_period = get_salary_period(day)
     df_iterable = db_manager.get_users_salaryperiod(
         salary_period
     ).to_dataframe_iterable()
