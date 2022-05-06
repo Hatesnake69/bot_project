@@ -2,41 +2,61 @@
 Модуль содержит обработчики, осуществляющие поиск зарегистрированных
 пользователей в базе данных BigQuery, по команде /search.
 """
-
 from re import compile, fullmatch
-
-from aiogram.dispatcher import FSMContext
-from aiogram.types import Message
-
 from loader import db_manager, dp
 from states.search_states import SearchStates
 from filters import IsRegistered
+from aiogram.types import Message, InlineKeyboardMarkup, \
+    InlineKeyboardButton, CallbackQuery
 
 
+@dp.callback_query_handler(text=['/next_search'], state=SearchStates.AFT_SEAR)
 @dp.message_handler(IsRegistered(), commands=["search"], state="*")
-async def search_info(message: Message) -> None:
+async def search_info(event) -> None:
     """
     Обработчик осуществляет приветствие и информирует о
     правилах поиска пользователей.
-
-    :param message: объект Message
-    :type message: Message
-
-    :return: None
-    :rtype: NoneType
     """
+    keyboard_markup = InlineKeyboardMarkup(row_width=2)
+    text_and_data = (
+        ('Примеры запросов', '/example'),
+        ('Правила поиска', '/rule'),
+    )
+    row_btns2 = (InlineKeyboardButton(text, callback_data=data) for
+                 text, data in text_and_data)
+    keyboard_markup.add(*row_btns2)
 
-    await message.answer(
-        "Что бы найти информацию о зарегистрированном пользователе введите: "
-        "Фамилию, Имя, корпоративную почту (@ylab.io) или telegram-логин "
-        "(в формате @username).\n"
-        "Вы можете ввести всю известную информацию одним сообщением, в любом "
-        "порядке, отделяя слова пробелами, а так же можете ввести "
-        "произвольное число слов в одном сообщении, например только Фамилию и "
-        "Имя или только telegram-логин.\n"
-        "Примеры запросов:\nГригорий Гуляев g.gulyaev@ylab.io @icedevil\n"
-        "Григорий Гуляев\nГуляев\ng.gulyaev@ylab.io")
+    search_inf = "Что бы найти известную информацию о зарегистрированном" \
+                 " пользователе введите: Фамилию, Имя, корпоративную почту" \
+                 " или телеграмм логин."
+    try:
+        await event.message.answer(search_inf, reply_markup=keyboard_markup)
+    except AttributeError:
+        await event.answer(search_inf, reply_markup=keyboard_markup)
     await SearchStates.SEARCH_PROCESS.set()
+
+
+@dp.callback_query_handler(text='/example', state=SearchStates.SEARCH_PROCESS)
+async def search_example(query: CallbackQuery) -> None:
+    """
+    Обработчик показывает пользователю примеры запросов
+    """
+    await query.answer("Гуляев g.gulyaev@ylab.io @icedevil\n"
+                       "Григорий Гуляев g.gulyaev@ylab.io\n"
+                       "григорий Гуляев\nгуляев\ng.gulyaev@ylab.io\n"
+                       "@icedevil",
+                       show_alert=True)
+
+
+@dp.callback_query_handler(text='/rule', state=SearchStates.SEARCH_PROCESS)
+async def search_rule(query: CallbackQuery) -> None:
+    """
+    Обработчик показывает пользователю правила поиска
+    """
+    await query.answer(
+        "Введите произвольное число слов в любом порядке, "
+        "отделяя слова пробелами, почту в домене @ylab.io, "
+        "телеграм логин в формате @username", show_alert=True)
 
 
 @dp.message_handler(state=SearchStates.SEARCH_PROCESS)
@@ -44,57 +64,48 @@ async def search_response(message: Message) -> None:
     """
     Обработчик принимает поисковый запрос от пользователя,
     и отправляет сообщение в чат с результатом поиска.
-
-    :param message: объект Message
-    :type message: Message
-
-    :return: None
-    :rtype: NoneType
     """
-
+    keyboard_markup2 = InlineKeyboardMarkup(row_width=2)
+    text_and_data2 = (
+        ('Продолжить поиск', '/next_search'),
+        ('Закончить поиск', '/end_search'),
+    )
+    row_btns2 = (InlineKeyboardButton(text2, callback_data=data2) for
+                 text2, data2 in text_and_data2)
+    keyboard_markup2.add(*row_btns2)
     parse_data = parsing(message.text)
     if isinstance(parse_data, str):
         await message.answer(parse_data)
     else:
         await message.answer(users_search(parse_data))
-    await message.answer("Хотите продолжить поиск? (да/нет)")
-    await SearchStates.AFTER_SEARCH_PROCESS.set()
+    await message.answer(
+        "Вы можете сделать еще один запрос или завершить поиск",
+        reply_markup=keyboard_markup2)
+    await SearchStates.AFT_SEAR.set()
 
 
-@dp.message_handler(state=SearchStates.AFTER_SEARCH_PROCESS)
-async def after_search_response(message: Message, state: FSMContext) -> None:
+@dp.callback_query_handler(state=SearchStates.AFT_SEAR)
+async def after_search_response(message: Message) -> None:
     """
     Обработчик реализует свои действия после того, как пользователь
     отправил поисковый запрос, и не зависимо от результата поиска
     пользователю будет предложено повторить поиск или покинуть его.
-
-    :param message: объект Message
-    :type message: Message
-    :param state: объект FSMContext
-    :type state: FSMContext
-
-    :return: None
-    :rtype: NoneType
     """
+    keyboard_markup = InlineKeyboardMarkup(row_width=2)
+    text_and_data = (
+        ('Примеры запросов', '/example'),
+        ('Правила поиска', '/rule'),
+    )
+    row_btns2 = (InlineKeyboardButton(text, callback_data=data) for
+                 text, data in text_and_data)
+    keyboard_markup.add(*row_btns2)
 
-    if message.text.lower() == 'да':
-        await message.answer(
-            "Что бы найти информацию о зарегистрированном пользователе"
-            " введите: "
-            "Фамилию, Имя, корпоративную почту (@ylab.io) или telegram-логин "
-            "(в формате @username).\n")
-        await SearchStates.SEARCH_PROCESS.set()
-    else:
-        await message.answer("Cписок доступных команд:\n"
-                             "/reg - регистрация в боте;\n"
-                             "/search - поиск зарегистрированных"
-                             " пользователей;\n"
-                             "/create_event - создание запланированной"
-                             " встречи;\n"
-                             "/details_job - информация о времени работы;\n"
-                             "/faq - часто задаваемые вопросы.\n"
-                             "/cancel - отмена текущей команды")
-        await state.finish()
+    search_inf = "Что бы найти известную информацию о зарегистрированном" \
+                 " пользователе введите: Фамилию, Имя, корпоративную почту" \
+                 " или телеграмм логин."
+
+    await message.answer(search_inf, reply_markup=keyboard_markup)
+    await SearchStates.SEARCH_PROCESS.set()
 
 
 def parsing(data: str) -> any:
@@ -180,7 +191,7 @@ def users_search(parse_data: dict) -> str:
     :rtype: str
     """
 
-    df_iterable = db_manager.get_df_for_search(parse_data).\
+    df_iterable = db_manager.get_df_for_search(parse_data). \
         to_dataframe_iterable()
     for frame_data in df_iterable:
         search_answer = frame_data.to_dict(orient="index")

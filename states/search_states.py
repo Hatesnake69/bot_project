@@ -5,5 +5,6 @@ class SearchStates(StatesGroup):
     """
     Класс описывает состояния обработчиков, отвечающих за поиск пользователей.
     """
+    SEARCH_START = State()
     SEARCH_PROCESS = State()
-    AFTER_SEARCH_PROCESS = State()
+    AFT_SEAR = State()
