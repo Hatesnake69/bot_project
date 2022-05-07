@@ -2,12 +2,16 @@
 Модуль содержит обработчики, осуществляющие поиск зарегистрированных
 пользователей в базе данных BigQuery, по команде /search.
 """
+import logging
+from utils import get_logger
 from re import compile, fullmatch
 from loader import db_manager, dp
 from states.search_states import SearchStates
 from filters import IsRegistered
 from aiogram.types import Message, InlineKeyboardMarkup, \
     InlineKeyboardButton, CallbackQuery
+
+logger = get_logger('bot.log', logging.ERROR)
 
 
 @dp.callback_query_handler(text=['/next_search'], state=SearchStates.AFT_SEAR)
@@ -190,7 +194,6 @@ def users_search(parse_data: dict) -> str:
     :return: найденные данные
     :rtype: str
     """
-
     df_iterable = db_manager.get_df_for_search(parse_data). \
         to_dataframe_iterable()
     for frame_data in df_iterable:
@@ -219,9 +222,15 @@ def view(data: dict) -> str:
     :return: строка с данными
     :rtype: str
     """
-
-    answer = '\n'.join([' '.join(data[index].values()) for index in data])
-    return answer
+    try:
+        for index in data:
+            for key in list(data[index]):
+                if not isinstance(data[index][key], str):
+                    data[index].pop(key)
+        answer = '\n'.join([' '.join(data[index].values()) for index in data])
+        return answer
+    except TypeError:
+        logger.error('Проверьте правильность полей в базе данных')
 
 
 def match(search_answer: dict, parse_data: dict) -> bool:
