@@ -66,8 +66,8 @@ async def process_reg_command(message: Message) -> None:
     check_user = await manager.check_user(message=message)
     if check_user:
         await message.answer(
-            text=("Добро пожаловать в чат Бот компании Ylab. Вы уже "
-                  "зарегистрированы. Нажмите /help и выберите команду.")
+            text=(f"Вы уже зарегистрированы, {message.from_user.username}. "
+                  f"Нажмите /help и выберите команду.")
         )
     else:
         await message.answer(
@@ -111,7 +111,7 @@ async def send_email_message(message: Message, state: FSMContext) -> None:
         sending_message(to_email=target_email, secret_key=secret_key)
 
         await message.answer(
-            text="На вашу почту отправлен ключ подтверждения введите его:"
+            text="На вашу почту отправлен ключ подтверждения, введите его:"
         )
         await cache.update_data(
             chat=chat_id,
@@ -147,11 +147,12 @@ async def input_key_message(message: Message, state: FSMContext) -> None:
     )
     if secret_key.get('secret_key') != message.text:
         await message.answer(
-            text="Неверный пароль. Пожалуйста, повторите попытку."
+            text="Неверный пароль. Пожалуйста, повторите попытку:"
         )
     else:
         await manager.authentication(message)
         await message.answer(
-            text="Вы ввели верный ключ! Добро пожаловать в YlabBot"
+            text=f"Вы ввели верный ключ! Добро пожаловать в YlabBot, "
+                 f"{message.from_user.username}."
         )
         await state.finish()

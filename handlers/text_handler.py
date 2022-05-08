@@ -1,6 +1,7 @@
 from aiogram.types import Message
 
 from loader import dp
+from filters import IsRegistered
 
 
 @dp.message_handler()
@@ -15,8 +16,13 @@ async def cmd_cancel(message: Message) -> None:
     :return: None
     :rtype: NoneType
     """
-    await message.answer("Добро пожаловать в чат Бот компании Ylab. Для "
-                         "регистрации в Боте введите команду /reg, "
-                         "или /help для получения списка доступных команд. "
-                         "Если Вы не прошли регистрацию, функционал "
-                         "Бота будет заблокирован.")
+    registered = await IsRegistered().check(message)
+
+    welcome_info = f"Нужна помощь, {message.from_user.username}?\n"
+
+    if not registered:
+        welcome_info += "Для регистрации в боте введите команду /reg.\n"
+    else:
+        welcome_info += "Для получения списка доступных команд нажмите /help."
+
+    await message.answer(welcome_info)

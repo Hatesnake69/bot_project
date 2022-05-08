@@ -39,8 +39,8 @@ async def create_event_start(message: Message) -> None:
     """
 
     await CreateEventForm.event_name.set()
-    await message.reply("Привет!\nУкажите название события или нажмите "
-                        "/f для введения текста события целиком")
+    await message.reply("Укажите название события или нажмите \n"
+                        "/event_text для введения текста события целиком")
 
 
 @dp.message_handler(IsRegistered(), commands=["f"], state="*")
@@ -305,6 +305,7 @@ async def set_event_status_common(callback_query: CallbackQuery,
    :return: None
    :rtype: NoneType
    """
+    await callback_query.message.delete()
 
     async with state.proxy() as data:
         data["event_status"] = "Событие для всех"
@@ -342,6 +343,8 @@ async def set_event_status_person(callback_query: CallbackQuery,
   :rtype: NoneType
   """
 
+    await callback_query.message.delete()
+
     async with state.proxy() as data:
         data["event_status"] = "Персональное событие"
 
@@ -378,6 +381,8 @@ async def set_event_confirm(callback_query: CallbackQuery,
     :rtype: NoneType
     """
 
+    await callback_query.message.delete()
+
     async with state.proxy() as data:
         await callback_query.message.answer("Событие создано")
         if data.get(
@@ -413,6 +418,7 @@ async def set_event_not_created(callback_query: CallbackQuery,
     :return: None
     :rtype: NoneType
     """
+    await callback_query.message.delete()
 
     async with state.proxy():
         await callback_query.message.answer("Событие не создано")

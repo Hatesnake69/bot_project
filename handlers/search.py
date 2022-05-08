@@ -26,9 +26,8 @@ async def search_info(event) -> None:
                  text, data in text_and_data)
     keyboard_markup.add(*row_btns2)
 
-    search_inf = "Что бы найти известную информацию о зарегистрированном" \
-                 " пользователе введите: Фамилию, Имя, корпоративную почту" \
-                 " или телеграмм логин."
+    search_inf = "Для поиска информации о сотруднике Ylab введите фамилию, " \
+                 "имя, корпоративную почту или логин."
     try:
         await event.message.answer(search_inf, reply_markup=keyboard_markup)
     except AttributeError:
@@ -54,8 +53,8 @@ async def search_rule(query: CallbackQuery) -> None:
     Обработчик показывает пользователю правила поиска
     """
     await query.answer(
-        "Введите произвольное число слов в любом порядке, "
-        "отделяя слова пробелами, почту в домене @ylab.io, "
+        "Введите параметры поиска через пробел, "
+        "корпоративная почта в домене @ylab.io, "
         "телеграм логин в формате @username", show_alert=True)
 
 
@@ -100,9 +99,8 @@ async def after_search_response(message: Message) -> None:
                  text, data in text_and_data)
     keyboard_markup.add(*row_btns2)
 
-    search_inf = "Что бы найти известную информацию о зарегистрированном" \
-                 " пользователе введите: Фамилию, Имя, корпоративную почту" \
-                 " или телеграмм логин."
+    search_inf = "Для поиска информации о сотруднике Ylab введите фамилию, " \
+                 "имя, корпоративную почту или логин."
 
     await message.answer(search_inf, reply_markup=keyboard_markup)
     await SearchStates.SEARCH_PROCESS.set()
