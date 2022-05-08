@@ -5,6 +5,7 @@
 """
 from aiogram.dispatcher import FSMContext
 from aiogram.types import Message, ReplyKeyboardRemove
+from filters import IsRegistered
 
 from loader import dp
 
@@ -23,16 +24,24 @@ async def process_start_command(message: Message, state: FSMContext) -> None:
     :return: None
     :rtype: NoneType
     """
+    welcome_info = f"Добро пожаловать в чат-бот компании Ylab, " \
+                   f"{message.from_user.username}.\n"
 
-    await message.answer("Добро пожаловать в чат Бот компании Ylab. Для "
-                         "регистрации в Боте введите команду /reg, "
-                         "или /help для получения списка доступных команд.")
+    registered = await IsRegistered().check(message)
+
+    if not registered:
+        welcome_info += "Для регистрации в боте введите команду /reg.\n"
+    else:
+        welcome_info += "Для получения списка доступных команд нажмите /help."
+
+    await message.answer(welcome_info)
     await state.finish()
 
 
 @dp.callback_query_handler(text=['/end_search'], state="*")
-@dp.message_handler(commands=["help"], state="*")
-async def process_help_command(event, state: FSMContext) -> None:
+@dp.message_handler(IsRegistered(),
+                    commands=["help"], state="*")
+async def process_help_command(obj, state: FSMContext) -> None:
     """
     Выводит список доступных команд бота
 
@@ -44,17 +53,18 @@ async def process_help_command(event, state: FSMContext) -> None:
     :return: None
     :rtype: NoneType
     """
-    help_info = "Список доступных команды бота:\n" \
-                " /reg - регистрация в боте;\n" \
-                " /search - поиск зарегистрированных пользователей;\n" \
-                " /create_event - создание запланированной встречи;\n" \
-                "/details_job - информация о времени работы;\n" \
-                "/faq - часто задаваемые вопросы.\n" \
-                "/cancel - отмена текущей команды"
+
+    help_info = "Выберите команду:\n" \
+                "/search - поиск зарегистрированных пользователей;\n" \
+                "/create_event - создание напоминания о событии;\n" \
+                "/details_job - информация об отработанном времени;\n" \
+                "/faq - часто задаваемые вопросы;\n" \
+                "/cancel - отмена текущей команды;"
+
     try:
-        await event.message.answer(help_info)
+        await obj.message.answer(help_info)
     except AttributeError:
-        await event.answer(help_info)
+        await obj.answer(help_info)
     await state.finish()
 
 
