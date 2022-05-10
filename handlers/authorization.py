@@ -13,6 +13,7 @@ from loader import db_manager as manager
 from loader import dp
 from services import sending_message
 from states import RegStates
+from filters import IsGroupChat
 
 
 async def tracker(message: Message, key: str, state: FSMContext) -> None:
@@ -50,7 +51,7 @@ async def tracker(message: Message, key: str, state: FSMContext) -> None:
     await cache.update_data(chat=chat_id, user=user_id, data=data)
 
 
-@dp.message_handler(commands=["reg"], state="*")
+@dp.message_handler(IsGroupChat(), commands=["reg"], state="*")
 async def process_reg_command(message: Message) -> None:
     """
     Функция проверяет зарегистрирован ли пользователь и

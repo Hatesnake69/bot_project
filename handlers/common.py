@@ -3,14 +3,17 @@
 новых пользователей, доведение полезной информации, а так же список
 доступных команд и FAQ.
 """
+
+from typing import Union
+
 from aiogram.dispatcher import FSMContext
-from aiogram.types import Message, ReplyKeyboardRemove
-from filters import IsRegistered
+from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 
 from loader import dp
+from filters import IsGroupChat, IsRegistered
 
 
-@dp.message_handler(commands=["start"], state="*")
+@dp.message_handler(IsGroupChat(), commands=["start"], state="*")
 async def process_start_command(message: Message, state: FSMContext) -> None:
     """
     Перехватывает команду start и выводит
@@ -39,14 +42,16 @@ async def process_start_command(message: Message, state: FSMContext) -> None:
 
 
 @dp.callback_query_handler(text=['/end_search'], state="*")
-@dp.message_handler(IsRegistered(),
-                    commands=["help"], state="*")
-async def process_help_command(obj, state: FSMContext) -> None:
+@dp.message_handler(IsRegistered(), commands=["help"], state="*")
+async def process_help_command(
+        obj: Union[Message, CallbackQuery],
+        state: FSMContext
+) -> None:
     """
     Выводит список доступных команд бота
 
-    :param event: объект Message или CallbackQuery
-    :type event : Message или CallbackQuery
+    :param obj: объект Message или CallbackQuery
+    :type obj : Message или CallbackQuery
     :param state: объект FSMContext
     :type state : FSMContext
 
@@ -64,7 +69,12 @@ async def process_help_command(obj, state: FSMContext) -> None:
     try:
         await obj.message.answer(help_info)
     except AttributeError:
-        await obj.answer(help_info)
+        if obj.from_user.id != obj.chat.id:
+            help_info = "Список доступных команды бота:\n" \
+                        "/create_event - создание запланированной встречи;\n"
+            await obj.answer(help_info)
+        else:
+            await obj.answer(help_info)
     await state.finish()
 
 
