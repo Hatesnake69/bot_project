@@ -6,7 +6,7 @@ from aiogram.types import CallbackQuery, Message
 from pandas import read_json
 
 from data import cache
-from filters import IsRegistered
+from filters import IsRegistered, IsGroupChat
 from keyboards import DrawKeyboardsPeriods
 from loader import bot, db_manager, dp
 from services import save_graph
@@ -78,7 +78,10 @@ def sort_salary_periods(salary_periods: list) -> list:
 
 
 @dp.message_handler(
-    IsRegistered(), Text(equals=["/details_job"]), commands=["details_job"]
+    IsRegistered(),
+    IsGroupChat(),
+    Text(equals=["/details_job"]),
+    commands=["details_job"]
 )
 async def print_menu_salary_period(message: Message,
                                    state: FSMContext) -> None:

@@ -1,7 +1,7 @@
 from aiogram.types import CallbackQuery, Message
 
 import keyboards as key
-from filters import IsRegistered
+from filters import IsRegistered, IsGroupChat
 from loader import dp
 
 
@@ -27,6 +27,7 @@ async def send_keyboard(faq_category: str, call: CallbackQuery) -> None:
 
 @dp.message_handler(
     IsRegistered(),
+    IsGroupChat(),
     commands=['faq'],
     state="*")
 async def start_category(message: Message) -> None:

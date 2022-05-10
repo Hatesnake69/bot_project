@@ -1,11 +1,11 @@
 from aiogram.types import Message
 
 from loader import dp
-from filters import IsRegistered
+from filters import IsGroupChat, IsRegistered
 
 
-@dp.message_handler()
-async def cmd_cancel(message: Message) -> None:
+@dp.message_handler(IsGroupChat())
+async def text_handler(message: Message) -> None:
     """
     Отправляет приветственное сообщение
     пользователю
@@ -17,12 +17,9 @@ async def cmd_cancel(message: Message) -> None:
     :rtype: NoneType
     """
     registered = await IsRegistered().check(message)
-
     welcome_info = f"Нужна помощь, {message.from_user.username}?\n"
-
     if not registered:
         welcome_info += "Для регистрации в боте введите команду /reg.\n"
     else:
         welcome_info += "Для получения списка доступных команд нажмите /help."
-
     await message.answer(welcome_info)

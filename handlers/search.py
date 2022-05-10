@@ -7,7 +7,7 @@ from utils import get_logger
 from re import compile, fullmatch
 from loader import db_manager, dp
 from states.search_states import SearchStates
-from filters import IsRegistered
+from filters import IsRegistered, IsGroupChat
 from aiogram.types import Message, InlineKeyboardMarkup, \
     InlineKeyboardButton, CallbackQuery
 
@@ -15,7 +15,12 @@ logger = get_logger('bot.log', logging.ERROR)
 
 
 @dp.callback_query_handler(text=['/next_search'], state=SearchStates.AFT_SEAR)
-@dp.message_handler(IsRegistered(), commands=["search"], state="*")
+@dp.message_handler(
+    IsRegistered(),
+    IsGroupChat(),
+    commands=["search"],
+    state="*"
+)
 async def search_info(event) -> None:
     """
     Обработчик осуществляет приветствие и информирует о
