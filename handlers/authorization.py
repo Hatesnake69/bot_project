@@ -108,8 +108,7 @@ async def send_email_message(message: Message, state: FSMContext) -> None:
     if is_data_valid(data=target_email, case='email'):
         if not await manager.check_auth(message=message):
             await manager.registration(message=message)
-        # TODO: Отправлять письма асинхронно
-        sending_message(to_email=target_email, secret_key=secret_key)
+        await sending_message(to_email=target_email, secret_key=secret_key)
 
         await message.answer(
             text="На вашу почту отправлен ключ подтверждения, введите его:"
@@ -151,7 +150,8 @@ async def input_key_message(message: Message, state: FSMContext) -> None:
             text="Неверный пароль. Пожалуйста, повторите попытку:"
         )
     else:
-        await manager.authentication(message)
+        email = secret_key.get('email')
+        await manager.authentication(message, email)
         await message.answer(
             text=f"Вы ввели верный ключ! Добро пожаловать в YlabBot, "
                  f"{message.from_user.username}."

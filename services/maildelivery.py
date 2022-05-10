@@ -10,7 +10,7 @@ from utils import get_logger
 logger = get_logger(__name__)
 
 
-def sending_message(to_email: str, secret_key: str) -> None:
+async def sending_message(to_email: str, secret_key: str) -> None:
     """
     Функция отправляет письмо на почту пользователю,
     которую он ввел в чат боте.

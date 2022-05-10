@@ -93,11 +93,13 @@ class DBManager(AbstractDBManager):
         """
 
         tg_id = int(message.from_user.id)
+        email = message.text
 
         qry: str = (f"SELECT telegram_id FROM "
                     f"TG_Bot_Stager.users "
                     f"WHERE telegram_id = {tg_id} AND"
-                    f" is_confirmed = false")
+                    f" is_confirmed = false AND"
+                    f" email = '{email}'")
         return len(list(self.make_query(qry))) != 0
 
     @bq_error_handler
@@ -127,13 +129,15 @@ class DBManager(AbstractDBManager):
         self.make_query(query)
 
     @bq_error_handler
-    async def authentication(self, message: Message) -> None:
+    async def authentication(self, message: Message, email: str) -> None:
         """
         Аутентифицирует пользователя
 
         :param message: сообщение пользователя из которого ожидается
         secret key
         :type message: types.Message
+        :param email: email пользователя
+        :type email: str
 
         :return: None
         :rtype: NoneType
@@ -144,7 +148,8 @@ class DBManager(AbstractDBManager):
         query: str = (f"UPDATE TG_Bot_Stager.users"
                       f" SET is_confirmed = true ,"
                       f" registration_code = '{secret_key}'"
-                      f" WHERE telegram_id = {tg_id}")
+                      f" WHERE telegram_id = {tg_id} AND"
+                      f" email = '{email}'")
 
         self.make_query(query)
 
