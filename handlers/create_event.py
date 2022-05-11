@@ -43,7 +43,9 @@ async def create_event_start(message: Message) -> None:
                         "/event_text для введения текста события целиком")
 
 
-@dp.message_handler(IsRegistered(), commands=["f"], state="*")
+@dp.message_handler(IsRegistered(),
+                    commands=["event_text"],
+                    state="*")
 async def parse_event_start(message: Message) -> None:
     """
     Перехватывает команду f и выводит сообщение с
@@ -58,7 +60,7 @@ async def parse_event_start(message: Message) -> None:
 
     await CreateEventForm.event_text.set()
     await message.reply("Введите сообщение через пробел как в примере: "
-                        "\nДень рождения 21/02/2022 15:00 Купить торт")
+                        "\nДень рождения 11/05/2022 17:10 Купить торт")
 
 
 @dp.message_handler(state=CreateEventForm.event_text)
@@ -257,7 +259,7 @@ async def set_event_time(callback_query: CallbackQuery,
 
         else:
             await bot.edit_message_reply_markup(
-                chat_id=callback_query.from_user.id,
+                chat_id=callback_query.message.chat.id,
                 message_id=callback_query.message.message_id,
                 reply_markup=inline_timepicker.get_keyboard())
 

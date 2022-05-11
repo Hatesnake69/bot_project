@@ -27,8 +27,12 @@ async def process_start_command(message: Message, state: FSMContext) -> None:
     :return: None
     :rtype: NoneType
     """
-    welcome_info = f"Добро пожаловать в чат-бот компании Ylab, " \
-                   f"{message.from_user.username}.\n"
+    sub_text = ""
+
+    if message.from_user.username is not None:
+        sub_text += f", {message.from_user.username}"
+
+    welcome_info = f"Добро пожаловать в чат-бот компании Ylab{sub_text}.\n"
 
     registered = await IsRegistered().check(message)
 
@@ -58,23 +62,23 @@ async def process_help_command(
     :return: None
     :rtype: NoneType
     """
+    help_info = ""
 
-    help_info = "Выберите команду:\n" \
-                "/search - поиск зарегистрированных пользователей;\n" \
-                "/create_event - создание напоминания о событии;\n" \
-                "/details_job - информация об отработанном времени;\n" \
-                "/faq - часто задаваемые вопросы;\n" \
-                "/cancel - отмена текущей команды;"
+    if type(obj) == Message:
+        help_info += "Выберите команду:\n" \
+                     "/search - поиск зарегистрированных пользователей;\n" \
+                     "/create_event - создание напоминания о событии;\n" \
+                     "/details_job - информация об отработанном времени;\n" \
+                     "/faq - часто задаваемые вопросы;\n" \
+                     "/cancel - отмена текущей команды;"
 
-    try:
+        await obj.answer(help_info)
+
+    if type(obj) == CallbackQuery:
+        help_info += "Поиск завершён."
+        await obj.message.delete()
         await obj.message.answer(help_info)
-    except AttributeError:
-        if obj.from_user.id != obj.chat.id:
-            help_info = "Список доступных команды бота:\n" \
-                        "/create_event - создание запланированной встречи;\n"
-            await obj.answer(help_info)
-        else:
-            await obj.answer(help_info)
+
     await state.finish()
 
 
