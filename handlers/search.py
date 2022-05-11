@@ -27,11 +27,10 @@ async def search_info(event) -> None:
     правилах поиска пользователей.
     """
     try:
-        if event.message.text == "Вы можете сделать еще один " \
-                                 "запрос или завершить поиск.":
+        if event.message.text == "Вы можете продолжить или завершить поиск.":
             await event.message.delete()
     except AttributeError:
-        pass
+        logger.error("AttributeError")
 
     keyboard_markup = InlineKeyboardMarkup(row_width=2)
     text_and_data = (

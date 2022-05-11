@@ -211,5 +211,8 @@ async def send_reminder_to_user(user_id: int, planned_at: datetime) -> None:
                  chat_id=user_id
             )
             for telegram_id in list_of_chat_users:
-                await bot.send_message(telegram_id, text=row[1])
+                try:
+                    await bot.send_message(telegram_id, text=row[1])
+                except Exception as e:
+                    log.error(e)
         await bot.send_message(row[0], text=row[1])
