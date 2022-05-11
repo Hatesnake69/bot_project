@@ -10,10 +10,10 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 
 from loader import dp
-from filters import IsGroupChat, IsRegistered
+from filters import IsRegistered
 
 
-@dp.message_handler(IsGroupChat(), commands=["start"], state="*")
+@dp.message_handler(commands=["start"], state="*")
 async def process_start_command(message: Message, state: FSMContext) -> None:
     """
     Перехватывает команду start и выводит
