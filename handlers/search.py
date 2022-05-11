@@ -26,6 +26,13 @@ async def search_info(event) -> None:
     Обработчик осуществляет приветствие и информирует о
     правилах поиска пользователей.
     """
+    try:
+        if event.message.text == "Вы можете сделать еще один " \
+                                 "запрос или завершить поиск.":
+            await event.message.delete()
+    except AttributeError:
+        pass
+
     keyboard_markup = InlineKeyboardMarkup(row_width=2)
     text_and_data = (
         ('Примеры запросов', '/example'),
@@ -75,8 +82,8 @@ async def search_response(message: Message) -> None:
     """
     keyboard_markup2 = InlineKeyboardMarkup(row_width=2)
     text_and_data2 = (
-        ('Продолжить поиск', '/next_search'),
-        ('Закончить поиск', '/end_search'),
+        ('Продолжить', '/next_search'),
+        ('Завершить', '/end_search'),
     )
     row_btns2 = (InlineKeyboardButton(text2, callback_data=data2) for
                  text2, data2 in text_and_data2)
@@ -87,7 +94,7 @@ async def search_response(message: Message) -> None:
     else:
         await message.answer(users_search(parse_data))
     await message.answer(
-        "Вы можете сделать еще один запрос или завершить поиск",
+        "Вы можете продолжить или завершить поиск.",
         reply_markup=keyboard_markup2)
     await SearchStates.AFT_SEAR.set()
 
@@ -99,6 +106,7 @@ async def after_search_response(message: Message) -> None:
     отправил поисковый запрос, и не зависимо от результата поиска
     пользователю будет предложено повторить поиск или покинуть его.
     """
+
     keyboard_markup = InlineKeyboardMarkup(row_width=2)
     text_and_data = (
         ('Примеры запросов', '/example'),
@@ -144,18 +152,18 @@ def parsing(data: str) -> any:
             if is_data_valid(word, 'email'):
                 parse_data.update({'email': word})
             else:
-                return "Проверьте правильность электронной почты!"
+                return "Проверьте правильность электронной почты."
         elif '@' in word:
             if is_data_valid(word, 'telegram_name'):
                 parse_data.update({'telegram_name': word})
             else:
-                return "Проверьте правильность @username или @email!"
+                return "Проверьте правильность @username или @email."
         else:
             words.append(word.lower().capitalize())
             if is_data_valid(" ".join(words), 'full_name'):
                 parse_data.update({'full_name': words})
             else:
-                return "Проверьте правильность Имени и Фамилии!"
+                return "Проверьте правильность имени и фамилии."
     return parse_data
 
 
@@ -211,7 +219,7 @@ def users_search(parse_data: dict) -> str:
                     return view(search_answer)
         else:
             return "Пользователь не существует или данные введены " \
-                   "не корректно!"
+                   "некорректно."
 
 
 def view(data: dict) -> str:

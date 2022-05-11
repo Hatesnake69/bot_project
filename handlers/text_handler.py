@@ -16,8 +16,15 @@ async def text_handler(message: Message) -> None:
     :return: None
     :rtype: NoneType
     """
+    sub_text = ""
+
+    if message.from_user.username is not None:
+        sub_text += f", {message.from_user.username}"
+
+    welcome_info = f"Нужна помощь{sub_text}?\n"
+
     registered = await IsRegistered().check(message)
-    welcome_info = f"Нужна помощь, {message.from_user.username}?\n"
+
     if not registered:
         welcome_info += "Для регистрации в боте введите команду /reg.\n"
     else:

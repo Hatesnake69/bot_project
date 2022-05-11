@@ -66,14 +66,18 @@ async def process_reg_command(message: Message) -> None:
 
     check_user = await manager.check_user(message=message)
     if check_user:
-        await message.answer(
-            text=(f"Вы уже зарегистрированы, {message.from_user.username}. "
-                  f"Нажмите /help и выберите команду.")
-        )
+        sub_text = ""
+        if message.from_user.username is not None:
+            sub_text += f", {message.from_user.username}"
+
+        registered_info = f"Вы уже зарегистрированы{sub_text}.\n" \
+                          f"Нажмите /help и выберите команду."
+
+        await message.answer(text=registered_info)
     else:
         await message.answer(
-            text=("Здравствуйте, напишите адрес свой электронной почты в "
-                  "домене @ylab.io для прохождения дальнейшей регистрации!")
+            text=("Для прохождения регистрации введите адрес рабочей почты в"
+                  " домене @ylab.io :")
         )
         await RegStates.EMAIL_MESSAGE.set()
 
@@ -121,7 +125,7 @@ async def send_email_message(message: Message, state: FSMContext) -> None:
         await RegStates.KEY_MESSAGE.set()
     else:
         await message.answer(
-            text="Проверьте правильность введенного адреса"
+            text="Проверьте правильность введенного адреса."
         )
 
 
@@ -150,10 +154,17 @@ async def input_key_message(message: Message, state: FSMContext) -> None:
             text="Неверный пароль. Пожалуйста, повторите попытку:"
         )
     else:
+        sub_text = ""
+
+        if message.from_user.username is not None:
+            sub_text += f", {message.from_user.username}"
+
         email = secret_key.get('email')
         await manager.authentication(message, email)
+
         await message.answer(
-            text=f"Вы ввели верный ключ! Добро пожаловать в YlabBot, "
-                 f"{message.from_user.username}."
+            text=f"Вы ввели верный ключ! Добро пожаловать в чат-бот "
+                 f"компании Ylab{sub_text}.\n"
+                 "Для получения списка доступных команд нажмите /help."
         )
         await state.finish()
