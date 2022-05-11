@@ -529,8 +529,8 @@ class DBManager(AbstractDBManager):
         """
 
         query = (
-            "SELECT DISTINCT telegram_id FROM"
-            "TG_Bot_Stager.users"
+            "SELECT DISTINCT telegram_id "
+            "FROM TG_Bot_Stager.users "
             "WHERE is_confirmed is true"
         )
         try:

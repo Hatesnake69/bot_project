@@ -6,6 +6,7 @@ from aiogram.types import CallbackQuery, Message
 from pandas import read_json
 
 from data import cache
+from bot import logger
 from filters import IsRegistered, IsGroupChat
 from keyboards import DrawKeyboardsPeriods
 from loader import bot, db_manager, dp
@@ -13,7 +14,7 @@ from services import save_graph
 from utils import constants
 
 draw_kb = DrawKeyboardsPeriods()
-COUNT_PERIODS_PAGE: int = 3
+COUNT_PERIODS_PAGE: int = 4
 
 
 async def get_menu_salary_period(message: Message) -> dict:
@@ -135,23 +136,26 @@ async def send_graph(call: CallbackQuery) -> None:
     :return: None
     :rtype: NoneType
     """
-
+    await call.answer("Период формируется")
+    await bot.delete_message(chat_id=call.from_user.id,
+                             message_id=call.message.message_id)
     df_iterable = db_manager.get_df_for_graph(
         call.from_user.id, call.data[1:]
     ).to_dataframe_iterable()
-
-    for df in df_iterable:
-        if not df.empty:
-            img = save_graph(df)
-            await call.bot.send_photo(
-                call.from_user.id,
-                img,
-                caption=call.data[1:]
-            )
-            await bot.delete_message(chat_id=call.from_user.id,
-                                     message_id=call.message.message_id)
-        else:
-            await call.answer("Заданный период не найден")
+    try:
+        for df in df_iterable:
+            if not df.empty:
+                img = save_graph(df)
+                await call.bot.send_photo(
+                    call.from_user.id,
+                    img,
+                    caption=call.data[1:]
+                )
+            else:
+                await call.answer("Заданный период не найден")
+    except Exception as e:
+        await call.message.answer("Возникла ошибка")
+        logger.error(e)
 
 
 @dp.callback_query_handler(lambda c: c.data == "Periods")
@@ -168,16 +172,20 @@ async def get_years(call: CallbackQuery, state: FSMContext) -> None:
     :rtype: NoneType
 
     """
-    async with state.proxy() as data:
-        periods = data["periods"]
+    try:
+        async with state.proxy() as data:
+            periods = data["periods"]
 
-    years: set = set(map(lambda period: f"20{period[-2::]}", periods))
+        years: set = {f"20{period[-2::]}" for period in periods}
 
-    kb_years = draw_kb.draw_years(years=years)
+        kb_years = draw_kb.draw_years(years=years)
 
-    await bot.delete_message(chat_id=call.from_user.id,
-                             message_id=call.message.message_id)
-    await call.message.answer("Выберите год: ", reply_markup=kb_years)
+        await bot.delete_message(chat_id=call.from_user.id,
+                                 message_id=call.message.message_id)
+        await call.message.answer("Выберите год: ", reply_markup=kb_years)
+    except Exception as e:
+        await call.message.answer("Возникла ошибка")
+        logger.error(e)
 
 
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith("year"))
@@ -193,25 +201,31 @@ async def get_periods_of_year(call: CallbackQuery, state: FSMContext) -> None:
     :rtype: NoneType
 
     """
-    year: str = call.data[-2::]
-    async with state.proxy() as data:
-        periods = data["periods"]
-
-    periods_yaer: list = [period for period in periods if period[-2::] == year]
-    count_periods: int = len(periods_yaer)
-
-    if count_periods <= COUNT_PERIODS_PAGE:
-        kb_periods = draw_kb.draw_periods(periods_yaer, 0, count_periods)
-    else:
-        kb_periods = draw_kb.draw_extra_kb(periods_yaer, 0, COUNT_PERIODS_PAGE,
-                                           "yaers_all_kb", "next_kb")
+    try:
+        year: str = call.data[-2::]
         async with state.proxy() as data:
-            data["periods_yaer"] = periods_yaer
-            data["period_index"] = COUNT_PERIODS_PAGE
+            periods = data["periods"]
 
-    await bot.delete_message(chat_id=call.from_user.id,
-                             message_id=call.message.message_id)
-    await call.message.answer("Выберите период: ", reply_markup=kb_periods)
+        periods_yaer: list = [period for period in periods if
+                              period[-2::] == year]
+        count_periods: int = len(periods_yaer)
+
+        if count_periods <= COUNT_PERIODS_PAGE:
+            kb_periods = draw_kb.draw_periods(periods_yaer, 0, count_periods)
+        else:
+            kb_periods = draw_kb.draw_extra_kb(periods_yaer, 0,
+                                               COUNT_PERIODS_PAGE,
+                                               "yaers_all_kb", "next_kb")
+            async with state.proxy() as data:
+                data["periods_yaer"] = periods_yaer
+                data["period_index"] = COUNT_PERIODS_PAGE
+
+        await bot.delete_message(chat_id=call.from_user.id,
+                                 message_id=call.message.message_id)
+        await call.message.answer("Выберите период: ", reply_markup=kb_periods)
+    except Exception as e:
+        await call.message.answer("Возникла ошибка")
+        logger.error(e)
 
 
 @dp.callback_query_handler(lambda c: c.data == "Next")
@@ -227,30 +241,36 @@ async def get_next_page(call: CallbackQuery, state: FSMContext) -> None:
     :rtype: NoneType
 
     """
+    try:
+        async with state.proxy() as data:
+            periods_yaer = data["periods_yaer"]
+            period_index = data["period_index"]
 
-    async with state.proxy() as data:
-        periods_yaer = data["periods_yaer"]
-        period_index = data["period_index"]
+        count_periods: int = len(periods_yaer) - period_index
 
-    count_periods: int = len(periods_yaer) - period_index
+        if count_periods > COUNT_PERIODS_PAGE:
+            stop = period_index + COUNT_PERIODS_PAGE
+            kb_periods = draw_kb.draw_extra_kb(periods_yaer, period_index,
+                                               stop,
+                                               "back_kb",
+                                               "next_kb")
 
-    if count_periods > COUNT_PERIODS_PAGE:
-        stop = period_index + COUNT_PERIODS_PAGE
-        kb_periods = draw_kb.draw_extra_kb(periods_yaer, period_index, stop,
-                                           "back_kb", "next_kb")
+        elif count_periods <= COUNT_PERIODS_PAGE:
+            stop = period_index + count_periods
+            kb_periods = draw_kb.draw_extra_kb(periods_yaer, period_index,
+                                               stop,
+                                               "back_kb")
 
-    elif count_periods <= COUNT_PERIODS_PAGE:
-        stop = period_index + count_periods
-        kb_periods = draw_kb.draw_extra_kb(periods_yaer, period_index, stop,
-                                           "back_kb")
+        async with state.proxy() as data:
+            data["period_index"] += COUNT_PERIODS_PAGE
 
-    async with state.proxy() as data:
-        data["period_index"] += COUNT_PERIODS_PAGE
+        await bot.delete_message(chat_id=call.from_user.id,
+                                 message_id=call.message.message_id)
 
-    await bot.delete_message(chat_id=call.from_user.id,
-                             message_id=call.message.message_id)
-
-    await call.message.answer("Выберите период: ", reply_markup=kb_periods)
+        await call.message.answer("Выберите период: ", reply_markup=kb_periods)
+    except Exception as e:
+        await call.message.answer("Возникла ошибка")
+        logger.error(e)
 
 
 @dp.callback_query_handler(lambda c: c.data == "Back")
@@ -265,25 +285,29 @@ async def get_back_page(call: CallbackQuery, state: FSMContext) -> None:
     :return: None
     :rtype: NoneType
     """
-    async with state.proxy() as data:
+    try:
+        async with state.proxy() as data:
 
-        periods_yaer = data["periods_yaer"]
-        period_index = data["period_index"]
+            periods_yaer = data["periods_yaer"]
+            period_index = data["period_index"]
 
-    start: int = period_index - 2 * COUNT_PERIODS_PAGE
-    stop: int = period_index - COUNT_PERIODS_PAGE
+        start: int = period_index - 2 * COUNT_PERIODS_PAGE
+        stop: int = period_index - COUNT_PERIODS_PAGE
 
-    if start > 0:
-        kb_periods = draw_kb.draw_extra_kb(periods_yaer, start, stop,
-                                           "back_kb", "next_kb")
+        if start > 0:
+            kb_periods = draw_kb.draw_extra_kb(periods_yaer, start, stop,
+                                               "back_kb", "next_kb")
 
-    elif start <= 0:
-        kb_periods = draw_kb.draw_extra_kb(periods_yaer, start, stop,
-                                           "yaers_all_kb", "next_kb")
+        elif start <= 0:
+            kb_periods = draw_kb.draw_extra_kb(periods_yaer, start, stop,
+                                               "yaers_all_kb", "next_kb")
 
-    async with state.proxy() as data:
-        data["period_index"] -= COUNT_PERIODS_PAGE
+        async with state.proxy() as data:
+            data["period_index"] -= COUNT_PERIODS_PAGE
 
-    await bot.delete_message(chat_id=call.from_user.id,
-                             message_id=call.message.message_id)
-    await call.message.answer("Выберите период: ", reply_markup=kb_periods)
+        await bot.delete_message(chat_id=call.from_user.id,
+                                 message_id=call.message.message_id)
+        await call.message.answer("Выберите период: ", reply_markup=kb_periods)
+    except Exception as e:
+        await call.message.answer("Возникла ошибка")
+        logger.error(e)
