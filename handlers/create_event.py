@@ -244,7 +244,7 @@ async def set_event_time(callback_query: CallbackQuery,
                     await CreateEventForm.next()
 
                     await callback_query.message.answer(
-                        text="Напиши комментарий."
+                        text="Напишите комментарий."
                     )
                 else:
                     inline_timepicker.init(
