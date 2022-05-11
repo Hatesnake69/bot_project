@@ -4,7 +4,6 @@ from datetime import date, datetime
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-from data import CHAT_ID
 from keyboards import confirmed_kb
 from loader import bot, db_manager, dp
 from services.graph import get_image, get_salary_period, get_xlabel_for_graph
@@ -40,7 +39,6 @@ async def send_graph_to_all(day: date) -> None:
     :return: None
     :rtype: NoneType
     """
-
     salary_period = get_salary_period(day)
     df_iterable = db_manager.get_users_salaryperiod(
         salary_period
@@ -205,14 +203,12 @@ async def send_reminder_to_user(user_id: int, planned_at: datetime) -> None:
     :return: None
     :rtype: NoneType
     """
-
     reminder_text = db_manager.get_reminder_text(planned_at)
 
     for row in reminder_text:
-
-        if CHAT_ID and user_id == CHAT_ID:
+        if user_id < 0:
             list_of_chat_users = await form_list_of_chat_users(
-                 chat_id=CHAT_ID
+                 chat_id=user_id
             )
             for telegram_id in list_of_chat_users:
                 await bot.send_message(telegram_id, text=row[1])

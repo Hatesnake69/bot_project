@@ -10,7 +10,6 @@ from aiogram_calendar import SimpleCalendar, simple_cal_callback
 from inline_timepicker.exceptions import WrongCallbackException
 from inline_timepicker.inline_timepicker import InlineTimepicker
 
-from data import CHAT_ID
 from filters import IsRegistered
 from loader import dp, bot
 from services.set_scheduler import set_scheduler_event
@@ -43,9 +42,7 @@ async def create_event_start(message: Message) -> None:
                         "/event_text для введения текста события целиком")
 
 
-@dp.message_handler(IsRegistered(),
-                    commands=["event_text"],
-                    state="*")
+@dp.message_handler(IsRegistered(), commands=["event_text"], state="*")
 async def parse_event_start(message: Message) -> None:
     """
     Перехватывает команду f и выводит сообщение с
@@ -102,10 +99,9 @@ async def set_event_text(message: Message, state: FSMContext) -> None:
                 data["event_name"] = event_name
                 data["event_comment"] = event_comment
 
-                await CreateEventForm.event_status.set()
+                await CreateEventForm.event_confirm.set()
 
-                await message.reply("Событие для всех?",
-                                    reply_markup=key.yn_kb)
+                await message.reply("Подтвердить?", reply_markup=key.yn_kb)
             else:
                 await message.reply("Нельзя выбирать дату и время раньше, "
                                     "чем сейчас")
@@ -286,84 +282,17 @@ async def set_event_comment(message: Message, state: FSMContext) -> None:
     async with state.proxy() as data:
         data["event_comment"] = message.text
 
-    await CreateEventForm.next()
-    await message.reply("Сделать событие для всех?",
-                        reply_markup=key.yn_kb)
-
-
-@dp.callback_query_handler(state=CreateEventForm.event_status,
-                           text=key.confirm.text)
-async def set_event_status_common(callback_query: CallbackQuery,
-                                  state: FSMContext) -> None:
-    """
-   Перехватывает комментарий со стейтом event_status на кнопке "да"
-   Спрашивает у пользователя подтверждение на создание события
-
-   :param callback_query: объект CallbackQuery
-   :type callback_query : CallbackQuery
-   :param state: объект FSMContext
-   :type state : FSMContext
-
-   :return: None
-   :rtype: NoneType
-   """
-    await callback_query.message.delete()
-
-    async with state.proxy() as data:
-        data["event_status"] = "Событие для всех"
-
-    await callback_query.message.answer(
+    await message.answer(
         text(
             text(data["event_name"]),
             text(data["event_date"]),
             text(data["event_time"]),
             text(data["event_comment"]),
-            text(data["event_status"]),
             sep="\n",
         ),
     )
-
     await CreateEventForm.next()
-    await callback_query.message.answer("Подтвердить?",
-                                        reply_markup=key.yn_kb)
-
-
-@dp.callback_query_handler(state=CreateEventForm.event_status,
-                           text=key.dn_confirm.text)
-async def set_event_status_person(callback_query: CallbackQuery,
-                                  state: FSMContext) -> None:
-    """
-  Перехватывает комментарий со стейтом event_status на кнопке "нет"
-  Спрашивает у пользователя подтверждение на создание события
-
-  :param callback_query: объект CallbackQuery
-  :type callback_query : CallbackQuery
-  :param state: объект FSMContext
-  :type state : FSMContext
-
-  :return: None
-  :rtype: NoneType
-  """
-
-    await callback_query.message.delete()
-
-    async with state.proxy() as data:
-        data["event_status"] = "Персональное событие"
-
-    await callback_query.message.answer(
-        text(
-            text(data["event_name"]),
-            text(data["event_date"]),
-            text(data["event_time"]),
-            text(data["event_comment"]),
-            text(data["event_status"]),
-            sep="\n",
-        ),
-    )
-
-    await CreateEventForm.next()
-    await callback_query.message.answer("Подтвердить?",
-                                        reply_markup=key.yn_kb)
+    await message.answer("Подтвердить?", reply_markup=key.yn_kb)
 
 
 @dp.callback_query_handler(state=CreateEventForm.event_confirm,
@@ -387,13 +316,10 @@ async def set_event_confirm(callback_query: CallbackQuery,
 
     async with state.proxy() as data:
         await callback_query.message.answer("Событие создано")
-        if data.get(
-                value="event_status",
-                default=None
-        ) == "Персональное событие":
+        if callback_query.from_user.id == callback_query.message.chat.id:
             user_id = callback_query.from_user.id
         else:
-            user_id = CHAT_ID
+            user_id = callback_query.message.chat.id
         set_scheduler_event(
             user_id=user_id,
             event=data["event_name"],
