@@ -65,14 +65,26 @@ async def process_help_command(
     help_info = ""
 
     if type(obj) == Message:
-        help_info += "Выберите команду:\n" \
-                     "/search - поиск зарегистрированных пользователей;\n" \
-                     "/create_event - создание напоминания о событии;\n" \
-                     "/details_job - информация об отработанном времени;\n" \
-                     "/faq - часто задаваемые вопросы;\n" \
-                     "/cancel - отмена текущей команды;"
 
-        await obj.answer(help_info)
+        user_id: int = obj.from_user.id
+        chat_id: int = obj.chat.id
+        if user_id != chat_id:
+            help_info = "Список доступных команд бота:\n" \
+                        "/create_event - создание запланированной встречи;\n" \
+                        "/cancel - отмена текущей команды;"
+
+            await obj.answer(help_info)
+        else:
+            help_info += "Выберите команду:\n" \
+                         "/search - поиск зарегистрированных " \
+                         "пользователей;\n" \
+                         "/create_event - создание напоминания о событии;\n" \
+                         "/details_job - информация об " \
+                         "отработанном времени;\n" \
+                         "/faq - часто задаваемые вопросы;\n" \
+                         "/cancel - отмена текущей команды;"
+
+            await obj.answer(help_info)
 
     if type(obj) == CallbackQuery:
         help_info += "Поиск завершён."
