@@ -21,10 +21,10 @@ async def on_startup(dp: Dispatcher):
 
 
 if __name__ == "__main__":
-    # executor.start_polling(dp, skip_updates=True)
-    executor.start_webhook(dispatcher=dp,
-                           webhook_path=config.WEBHOOK_PATH,
-                           on_startup=on_startup,
-                           skip_updates=True,
-                           host=config.WEBAPP_HOST,
-                           port=config.WEBAPP_PORT)
+    executor.start_polling(dp, skip_updates=True)
+    # executor.start_webhook(dispatcher=dp,
+    #                        webhook_path=config.WEBHOOK_PATH,
+    #                        on_startup=on_startup,
+    #                        skip_updates=True,
+    #                        host=config.WEBAPP_HOST,
+    #                        port=config.WEBAPP_PORT)

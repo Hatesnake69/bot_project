@@ -53,6 +53,7 @@ COPY . $APP_HOME
 # Изменяем владельца файлов на app
 RUN chown -R app:app $APP_HOME
 
+
 # Переключаемся на пользователя app
 USER app
 

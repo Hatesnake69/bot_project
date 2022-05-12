@@ -10,7 +10,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 
 from loader import dp
-from filters import IsRegistered
+from filters import IsRegistered, UserRoleFilter
 
 
 @dp.message_handler(commands=["start"], state="*")
@@ -83,7 +83,12 @@ async def process_help_command(
                          "отработанном времени;\n" \
                          "/faq - часто задаваемые вопросы;\n" \
                          "/cancel - отмена текущей команды;"
-
+            if UserRoleFilter(role='admin').check(message=obj):
+                help_info += \
+                    "\nКоманды админа: \n"\
+                    "/admin_message - сообщение для всех пользователей;\n" \
+                    "/ban_user - блокировка пользователя;\n"\
+                    "/unban_user - разблокировка пользователя;"
             await obj.answer(help_info)
 
     if type(obj) == CallbackQuery:

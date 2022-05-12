@@ -519,7 +519,7 @@ class DBManager(AbstractDBManager):
         except Exception as e:
             logging.error(e)
 
-    def get_user_id_list(self) -> list[str]:
+    def get_user_id_list(self, confirm_flag=True) -> list:
         """
         Метод выводит список telegram_id
         уникальных подтвержденных сотрудников из бд
@@ -527,14 +527,20 @@ class DBManager(AbstractDBManager):
         :return: список уникальных сотрудников
         :rtype: list
         """
-
-        query = (
-            "SELECT DISTINCT telegram_id "
-            "FROM TG_Bot_Stager.users "
-            "WHERE is_confirmed is true"
-        )
+        if confirm_flag:
+            query = (
+                "SELECT DISTINCT telegram_id "
+                "FROM TG_Bot_Stager.users "
+                "WHERE is_confirmed is true"
+            )
+        else:
+            query = (
+                "SELECT DISTINCT telegram_id "
+                "FROM TG_Bot_Stager.users"
+            )
         try:
             result = list(self.make_query(query=query))
             return result
         except Exception as e:
             logging.error(e)
+

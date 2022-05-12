@@ -1,16 +1,18 @@
 import logging
 
 from aiogram.dispatcher import FSMContext
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 
 from data import cache
-from filters import UserRoleFilter
+from filters import UserRoleFilter, IsGroupChat
 from loader import db_manager, dp
 from states import BanUserForm
+import keyboards as key
 
 
 @dp.message_handler(
     UserRoleFilter(role='admin'),
+    IsGroupChat(),
     commands=["ban_user"],
     state="*"
 )
@@ -24,15 +26,14 @@ async def ban_user_start(message: Message) -> None:
     :return: None
     :rtype: NoneType
     """
-
     await BanUserForm.ban_user_name.set()
     await message.reply("Укажите id пользователя")
 
 
 @dp.message_handler(state=BanUserForm.ban_user_name)
-async def unban_user_name(message: Message, state: FSMContext) -> None:
+async def ban_user_check(message: Message, state: FSMContext) -> None:
     """
-    Записывает в state.proxy id пользователя
+    Проверяет есть ли юзер в базе
 
     :param message: объект Message
     :type message : Message
@@ -42,47 +43,78 @@ async def unban_user_name(message: Message, state: FSMContext) -> None:
     :return: None
     :rtype: NoneType
     """
+    result = db_manager.get_user_id_list(confirm_flag=False)
+    list_of_users = [row[0] for row in result]
+    try:
+        if int(message.text) in list_of_users:
+            async with state.proxy() as data:
+                data['user_id'] = message.text
+            await message.answer(
+                "Подтвердите, вы точно хотите заблокировать этого "
+                "пользователя?",
+                reply_markup=key.yn_kb
+            )
+            await BanUserForm.next()
+        else:
+            await message.answer('Пользователь не найден. Повторите попытку')
+    except ValueError:
+        await message.answer('Неверный ввод. Указиже id пользователя.')
 
-    async with state.proxy() as data:
-        data['user_id'] = message.text
-    await message.answer(
-        'Вы действительно хотите заблокировать пользователя? (да/нет)'
-    )
-    await BanUserForm.next()
 
-
-@dp.message_handler(state=BanUserForm.ban_confirm)
-async def unban_user_confirm(message: Message, state: FSMContext) -> None:
+@dp.callback_query_handler(
+    state=BanUserForm.ban_confirm,
+    text=key.confirm.text
+)
+async def ban_user_confirm(
+        callback_query: CallbackQuery,
+        state: FSMContext
+) -> None:
     """
     В зависимости от ответа отправляет запрос в бд
 
-    :param message: объект Message
-    :type message : Message
+    :param callback_query: объект CallbackQuery
+    :type callback_query : CallbackQuery
     :param state: FSMContext
     :type state : объект FSMContext
 
     :return: None
     :rtype: NoneType
     """
-
-    if message.text.lower() in {"да", "нет"}:
-        if message.text.lower() == "да":
-            async with state.proxy() as data:
-                user_id = data['user_id']
-                try:
-                    db_manager.send_to_blacklist(user_id=user_id)
-                    await cache.update_data(
-                        user=user_id,
-                        data={'black_list': True}
-                    )
-                    await message.answer('Пользователь забанен')
-                except Exception as e:
-                    logging.error(e)
-                    await message.answer('Произошла ошибка')
-        else:
-            await message.answer('Операция отменена.')
-        await state.finish()
-    else:
-        await message.reply(
-            'Вы действительно хотите разблокировать пользователя? (да/нет)'
+    async with state.proxy() as data:
+        user_id = data['user_id']
+    try:
+        db_manager.send_to_blacklist(user_id=user_id)
+        await cache.update_data(
+            user=user_id,
+            data={'black_list': True}
         )
+        await callback_query.message.answer('Пользователь забанен')
+    except Exception as e:
+        logging.error(e)
+        await callback_query.answer('Произошла ошибка')
+    await callback_query.message.delete()
+    await state.finish()
+
+
+@dp.callback_query_handler(
+    state=BanUserForm.ban_confirm,
+    text=key.dn_confirm.text
+)
+async def ban_user_cancel(
+        callback_query: CallbackQuery,
+        state: FSMContext
+) -> None:
+    """
+    В зависимости от ответа отправляет запрос в бд
+
+    :param callback_query: объект CallbackQuery
+    :type callback_query : CallbackQuery
+    :param state: FSMContext
+    :type state : объект FSMContext
+
+    :return: None
+    :rtype: NoneType
+    """
+    await callback_query.message.delete()
+    await callback_query.message.answer('Действие отменено.')
+    await state.finish()
