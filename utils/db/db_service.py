@@ -543,4 +543,3 @@ class DBManager(AbstractDBManager):
             return result
         except Exception as e:
             logging.error(e)
-

@@ -9,6 +9,7 @@ from loader import db_manager, dp
 from states import UnBanUserForm
 import keyboards as key
 
+
 @dp.message_handler(
     UserRoleFilter(role='admin'),
     IsGroupChat(),
